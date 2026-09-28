@@ -10,7 +10,7 @@ export function resolveFields(
   const fieldErrors: Record<string, string> = {};
   for (const field of fields) {
     const given = partial[field.key]?.trim();
-    const value = given ? given : field.random(rng);
+    const value = given ? (field.normalize ? field.normalize(given) : given) : field.random(rng);
     const error = field.check(value);
     if (error) fieldErrors[field.key] = error;
     values[field.key] = value;

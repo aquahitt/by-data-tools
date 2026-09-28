@@ -24,4 +24,16 @@ describe('resolveFields', () => {
   it('reports a given invalid value per field', () => {
     expect(resolveFields([digit], { d: 'x' }, mulberry32(1)).fieldErrors).toEqual({ d: 'одна цифра' });
   });
+
+  it('normalizes a given value before checking it', () => {
+    const upper: FieldSpec = {
+      key: 'u',
+      label: 'Upper',
+      kind: 'text',
+      normalize: (v) => v.toUpperCase(),
+      check: (v) => (v === 'AB' ? null : 'bad'),
+      random: () => 'AB',
+    };
+    expect(resolveFields([upper], { u: 'ab' }, mulberry32(1))).toEqual({ values: { u: 'AB' }, fieldErrors: {} });
+  });
 });

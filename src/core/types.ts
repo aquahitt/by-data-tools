@@ -29,15 +29,17 @@ export interface FieldSpec {
   kind: 'text' | 'select';
   options?: FieldOption[];
   placeholder?: string;
+  /** Applied to a user-given value before `check` (e.g. Cyrillic lookalikes → Latin). */
+  normalize?(value: string): string;
   check(value: string): string | null;
   random(rng: Rng): string;
 }
 
 export type GenerateResult =
-  | { ok: true; value: string }
+  | { ok: true; value: string; hint?: string }
   | { ok: false; fieldErrors: Record<string, string> };
 
-export type FormatId = 'modern' | 'legacy';
+export type FormatId = string;
 
 export interface FormatModule {
   id: FormatId;

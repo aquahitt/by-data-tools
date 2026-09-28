@@ -2,7 +2,7 @@ import { checkDigit731 } from '../core/checkDigit';
 import { resolveFields } from '../core/fields';
 import { normalize } from '../core/normalize';
 import { pad, randInt } from '../core/random';
-import { structureIssues } from '../core/structure';
+import { PERSONAL_NUMBER_TEMPLATE, structureIssues } from '../core/structure';
 import type { FieldSpec, FormatModule, GenerateResult, Issue, ParsedField, Rng, ValidationResult } from '../core/types';
 
 // MVD resolution No. 345 of 18.10.2011: 7xxxxxx A NNN PB C, every rule mandatory.
@@ -29,7 +29,7 @@ const fields: FieldSpec[] = [
 function validate(input: string): ValidationResult {
   const n = normalize(input);
   const errors: Issue[] = [...n.errors];
-  if (errors.length === 0) errors.push(...structureIssues(n.value));
+  if (errors.length === 0) errors.push(...structureIssues(n.value, PERSONAL_NUMBER_TEMPLATE));
   if (errors.length === 0) {
     const v = n.value;
     if (v[0] !== '7') {
@@ -52,7 +52,7 @@ function validate(input: string): ValidationResult {
 
 function parse(input: string): ParsedField[] | null {
   const n = normalize(input);
-  if (n.errors.length > 0 || structureIssues(n.value).length > 0) return null;
+  if (n.errors.length > 0 || structureIssues(n.value, PERSONAL_NUMBER_TEMPLATE).length > 0) return null;
   const v = n.value;
   const expected = checkDigit731(v.slice(0, 13));
   return [

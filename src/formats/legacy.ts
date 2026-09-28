@@ -2,7 +2,7 @@ import { checkDigit731 } from '../core/checkDigit';
 import { resolveFields } from '../core/fields';
 import { normalize } from '../core/normalize';
 import { pad, pick, randInt } from '../core/random';
-import { structureIssues } from '../core/structure';
+import { PERSONAL_NUMBER_TEMPLATE, structureIssues } from '../core/structure';
 import type { FieldSpec, FormatModule, GenerateResult, Issue, ParsedField, Rng, ValidationResult } from '../core/types';
 
 // Pre-2012 format is not published officially. Tables below follow the media sources cited in the
@@ -120,7 +120,7 @@ function validate(input: string): ValidationResult {
   const n = normalize(input);
   const errors: Issue[] = [...n.errors];
   const warnings: Issue[] = [...n.warnings];
-  if (errors.length === 0) errors.push(...structureIssues(n.value));
+  if (errors.length === 0) errors.push(...structureIssues(n.value, PERSONAL_NUMBER_TEMPLATE));
   if (errors.length === 0) {
     const v = n.value;
     const first = decodeFirstDigit(v[0]);
@@ -158,7 +158,7 @@ function validate(input: string): ValidationResult {
 
 function parse(input: string): ParsedField[] | null {
   const n = normalize(input);
-  if (n.errors.length > 0 || structureIssues(n.value).length > 0) return null;
+  if (n.errors.length > 0 || structureIssues(n.value, PERSONAL_NUMBER_TEMPLATE).length > 0) return null;
   const v = n.value;
   const first = decodeFirstDigit(v[0]);
   const date = `${v.slice(1, 3)}.${v.slice(3, 5)}`;

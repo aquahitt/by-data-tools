@@ -1,17 +1,16 @@
 import type { Issue } from './types';
 
-export const NUMBER_LENGTH = 14;
+// D = digit, L = Latin letter.
+export const PERSONAL_NUMBER_TEMPLATE = 'DDDDDDDLDDDLLD'; // ЦЦЦЦЦЦЦ Б ЦЦЦ ББ Ц
+export const PASSPORT_NUMBER_TEMPLATE = 'LLDDDDDDD'; //       ББ ЦЦЦЦЦЦЦ
 
-// D = digit, L = Latin letter: ЦЦЦЦЦЦЦ Б ЦЦЦ ББ Ц
-const TEMPLATE = 'DDDDDDDLDDDLLD';
-
-export function structureIssues(value: string): Issue[] {
-  if (value.length !== NUMBER_LENGTH) {
-    return [{ code: 'LENGTH', message: `Длина ${value.length}, ожидается ${NUMBER_LENGTH} символов` }];
+export function structureIssues(value: string, template: string): Issue[] {
+  if (value.length !== template.length) {
+    return [{ code: 'LENGTH', message: `Длина ${value.length}, ожидается ${template.length} символов` }];
   }
   const issues: Issue[] = [];
-  for (let i = 0; i < NUMBER_LENGTH; i++) {
-    const wantDigit = TEMPLATE[i] === 'D';
+  for (let i = 0; i < template.length; i++) {
+    const wantDigit = template[i] === 'D';
     const ok = wantDigit ? /^[0-9]$/.test(value[i]) : /^[A-Z]$/.test(value[i]);
     if (!ok) {
       issues.push({

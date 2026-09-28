@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { charValue, checkDigit731 } from '../src/core/checkDigit';
+import { charValue, checkDigit731, icaoCheckDigit } from '../src/core/checkDigit';
 
 describe('checkDigit731', () => {
   // Hand-computed vectors (spec, "Контрольная цифра").
@@ -28,5 +28,22 @@ describe('checkDigit731', () => {
   it('rejects characters outside [0-9A-Z]', () => {
     expect(() => charValue('а')).toThrow(RangeError);
     expect(() => charValue('a')).toThrow(RangeError);
+  });
+});
+
+describe('icaoCheckDigit', () => {
+  it.each([
+    ['L898902C3', 6], // ICAO 9303 specimen passport
+    ['MP1234567', 7],
+    ['AB0000000', 3],
+    ['DP1234567', 4],
+    ['HB7654321', 8],
+  ])('%s -> %i', (value, expected) => {
+    expect(icaoCheckDigit(value)).toBe(expected);
+  });
+
+  it('treats the < filler as 0', () => {
+    expect(charValue('<')).toBe(0);
+    expect(icaoCheckDigit('L898902C<')).toBe(3);
   });
 });
