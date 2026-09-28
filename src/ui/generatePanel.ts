@@ -39,7 +39,13 @@ export function mountGeneratePanel(
       }
       return select;
     }
-    return el('md-outlined-text-field', { label: spec.label, placeholder: spec.placeholder ?? '', autocomplete: 'off' });
+    return el('md-outlined-text-field', {
+      label: spec.label,
+      placeholder: spec.placeholder ?? '',
+      autocomplete: 'off',
+      // Inherited by the shadow <input>; keeps typed data away from cloud spell-check.
+      spellcheck: 'false',
+    });
   }
 
   function clearError(control: Control): void {

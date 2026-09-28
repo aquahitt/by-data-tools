@@ -33,8 +33,14 @@ function isValidDate(year: number, month: number, day: number): boolean {
   return t.getUTCFullYear() === year && t.getUTCMonth() === month - 1 && t.getUTCDate() === day;
 }
 
+/** Today's calendar date in the user's time zone, as a UTC midnight timestamp. */
+function todayUtc(): number {
+  const now = new Date();
+  return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
 function isFuture(year: number, month: number, day: number): boolean {
-  return Date.UTC(year, month - 1, day) > Date.now();
+  return Date.UTC(year, month - 1, day) > todayUtc();
 }
 
 /** Digit 1: odd = male, even = female; 1-2 XIX, 3-4 XX, 5-6 XXI century. */
@@ -59,7 +65,7 @@ function checkBirthDate(v: string): string | null {
 
 function randomBirthDate(rng: Rng): string {
   const start = Date.UTC(1900, 0, 1);
-  const days = Math.floor((Date.now() - start) / DAY_MS);
+  const days = Math.floor((todayUtc() - start) / DAY_MS);
   const t = new Date(start + randInt(rng, 0, days) * DAY_MS);
   return `${pad(t.getUTCDate(), 2)}.${pad(t.getUTCMonth() + 1, 2)}.${t.getUTCFullYear()}`;
 }

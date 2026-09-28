@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { legacy } from '../src/formats/legacy';
 import { checkDigit731 } from '../src/core/checkDigit';
 import { mulberry32 } from '../src/core/random';
@@ -109,5 +109,29 @@ describe('legacy.generate', () => {
   it('rejects an unknown region', () => {
     const r = legacy.generate({ region: 'D' }, mulberry32(1));
     expect(r).toEqual({ ok: false, fieldErrors: { region: 'Выберите регион из списка' } });
+  });
+});
+
+// Minsk is UTC+3: between 00:00 and 03:00 local time the UTC date is still yesterday.
+describe('today in local time', () => {
+  const originalTz = process.env.TZ;
+  afterEach(() => {
+    vi.useRealTimers();
+    process.env.TZ = originalTz;
+  });
+
+  it('accepts today as a birth date right after local midnight', () => {
+    process.env.TZ = 'Europe/Minsk';
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-28T22:30:00Z')); // 29.09.2026 01:30 in Minsk
+    expect(legacy.generate({ birthDate: '29.09.2026' }, mulberry32(1)).ok).toBe(true);
+    expect(codes(withCheck('5290926A001PB'))).not.toContain('FUTURE_DATE');
+  });
+
+  it('still rejects tomorrow in local time', () => {
+    process.env.TZ = 'Europe/Minsk';
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-28T22:30:00Z'));
+    expect(codes(withCheck('5300926A001PB'))).toContain('FUTURE_DATE');
   });
 });

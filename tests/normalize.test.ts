@@ -32,4 +32,25 @@ describe('normalize', () => {
       { code: 'INVALID_CHAR', message: 'Недопустимый символ «Ж»', position: 8 },
     ]);
   });
+
+  it.each([
+    ['soft hyphen', '\u00AD'],
+    ['zero-width space', '\u200B'],
+    ['zero-width joiner', '\u200D'],
+    ['word joiner', '\u2060'],
+    ['BOM', '\uFEFF'],
+    ['minus sign', '\u2212'],
+    ['figure dash', '\u2012'],
+  ])('strips %s pasted from documents', (_name, ch) => {
+    const r = normalize(`\uFEFF7000000${ch}A000${ch}PB1`);
+    expect(r.value).toBe('7000000A000PB1');
+    expect(r.errors).toEqual([]);
+  });
+
+  it('names an invisible rejected character by its code point', () => {
+    const r = normalize('7000000\u2063A000PB1');
+    expect(r.errors).toHaveLength(1);
+    expect(r.errors[0].message).toBe('Недопустимый невидимый символ U+2063');
+    expect(r.errors[0].position).toBe(8);
+  });
 });
