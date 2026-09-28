@@ -65,4 +65,12 @@ describe('unpIndividual.generate', () => {
       fieldErrors: { sequence: 'Семь цифр, от 0000001 до 9999999' },
     });
   });
+
+  it('draws a random sequence that is issuable in the chosen region', () => {
+    const sequence = unpIndividual.fields.find((f) => f.key === 'sequence')!;
+    for (let seed = 1; seed <= 300; seed++) {
+      const value = sequence.random(mulberry32(seed), { region: 'M' });
+      expect(unpIndividual.generate({ region: 'M', sequence: value }, mulberry32(1)).ok).toBe(true);
+    }
+  });
 });

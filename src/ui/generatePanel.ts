@@ -62,7 +62,8 @@ export function mountGeneratePanel(
       const control = buildControl(spec);
       const dice = el('md-icon-button', { 'aria-label': `Случайное значение: ${spec.label}` }, mdIcon('dice'));
       dice.addEventListener('click', () => {
-        control.value = spec.random(rng);
+        const context = Object.fromEntries([...controls].map(([key, c]) => [key, c.value]));
+        control.value = spec.random(rng, context);
         clearError(control);
       });
       controls.set(spec.key, control);

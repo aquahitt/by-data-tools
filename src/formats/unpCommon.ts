@@ -112,7 +112,14 @@ export function unpFields(scheme: UnpScheme): FieldSpec[] {
       placeholder: '0098854',
       normalize: (v) => normalize(v).value,
       check: (v) => (/^\d{7}$/.test(v) && Number(v) >= scheme.minSequence ? null : `Семь цифр, от ${min} до 9999999`),
-      random: (rng: Rng) => pad(randInt(rng, scheme.minSequence, 9_999_999), 7),
+      // Never draws a number MNS would not issue in the region chosen so far (control number 10).
+      random: (rng: Rng, context?: Record<string, string>) => {
+        const region = context?.region && scheme.regionOf(context.region) ? context.region : null;
+        let sequence: string;
+        do sequence = pad(randInt(rng, scheme.minSequence, 9_999_999), 7);
+        while (region !== null && controlFor(scheme, region, sequence) === 10);
+        return sequence;
+      },
     },
   ];
 }
@@ -136,11 +143,13 @@ export function generateUnp(
 ): GenerateResult {
   const { values, fieldErrors } = resolveFields(fields, partial, rng);
   if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors };
-  const { region } = values;
-  let { sequence } = values;
+  let { region, sequence } = values;
   let control = controlFor(scheme, region, sequence);
   if (control === 10) {
-    if (partial.sequence?.trim()) {
+    const regionGiven = Boolean(partial.region?.trim());
+    const sequenceGiven = Boolean(partial.sequence?.trim());
+    if (regionGiven && sequenceGiven) {
+      // Both chosen explicitly: say so instead of silently changing the user's input.
       const nearest = nearestIssuable(scheme, region, Number(sequence));
       return {
         ok: false,
@@ -149,9 +158,11 @@ export function generateUnp(
         },
       };
     }
-    const sequenceField = fields.find((f) => f.key === 'sequence')!;
+    // Redraw whichever part was random; weight 29 is 7 mod 11, so at most two regions yield 10.
+    const redrawn = fields.find((f) => f.key === (sequenceGiven ? 'region' : 'sequence'))!;
     while (control === 10) {
-      sequence = sequenceField.random(rng);
+      if (sequenceGiven) region = redrawn.random(rng);
+      else sequence = redrawn.random(rng, { region });
       control = controlFor(scheme, region, sequence);
     }
   }

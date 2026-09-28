@@ -32,7 +32,8 @@ export interface FieldSpec {
   /** Applied to a user-given value before `check` (e.g. Cyrillic lookalikes → Latin). */
   normalize?(value: string): string;
   check(value: string): string | null;
-  random(rng: Rng): string;
+  /** `context` holds the other fields' current values, for fields that depend on them. */
+  random(rng: Rng, context?: Record<string, string>): string;
 }
 
 export type GenerateResult =

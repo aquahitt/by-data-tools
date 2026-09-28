@@ -79,4 +79,20 @@ describe('unpOrganization.generate', () => {
       fieldErrors: { region: 'Выберите область из списка', sequence: 'Семь цифр, от 0000000 до 9999999' },
     });
   });
+
+  it('redraws a random region instead of failing a given sequence', () => {
+    // 1195368 gives control number 10 only in region 7.
+    for (let seed = 1; seed <= 60; seed++) {
+      const r = unpOrganization.generate({ sequence: '1195368' }, mulberry32(seed));
+      expect(r.ok).toBe(true);
+    }
+  });
+
+  it('draws a random sequence that is issuable in the chosen region', () => {
+    const sequence = unpOrganization.fields.find((f) => f.key === 'sequence')!;
+    for (let seed = 1; seed <= 300; seed++) {
+      const value = sequence.random(mulberry32(seed), { region: '7' });
+      expect(unpOrganization.generate({ region: '7', sequence: value }, mulberry32(1)).ok).toBe(true);
+    }
+  });
 });
