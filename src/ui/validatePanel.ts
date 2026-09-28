@@ -8,9 +8,16 @@ export interface ValidatePanel {
   check(value: string): void;
 }
 
-export function mountValidatePanel(root: HTMLElement, onSwitchFormat: (id: FormatId) => void): ValidatePanel {
+export interface ValidatePanelOptions {
+  formats: FormatModule[];
+  inputLabel: string;
+  onSwitchFormat: (id: FormatId) => void;
+}
+
+export function mountValidatePanel(root: HTMLElement, options: ValidatePanelOptions): ValidatePanel {
+  const { formats, inputLabel, onSwitchFormat } = options;
   const field = el('md-outlined-text-field', {
-    label: 'Идентификационный номер',
+    label: inputLabel,
     'supporting-text': 'Пробелы, дефисы и регистр не важны',
     autocomplete: 'off',
     spellcheck: 'false',
@@ -52,7 +59,7 @@ export function mountValidatePanel(root: HTMLElement, onSwitchFormat: (id: Forma
     result.append(statusLine(r));
     if (r.errors.length) result.append(issueList(r.errors, 'error'));
     if (r.warnings.length) result.append(issueList(r.warnings, 'warning'));
-    const other = suggestOtherFormat(input, format.id);
+    const other = suggestOtherFormat(input, format.id, formats);
     if (other) {
       const switchButton = el('md-text-button', {}, 'Переключить');
       switchButton.addEventListener('click', () => onSwitchFormat(other.id));
