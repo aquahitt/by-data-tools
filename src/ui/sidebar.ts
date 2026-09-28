@@ -12,6 +12,7 @@ export function mountSidebar(
   nav: HTMLElement,
   menuButton: HTMLElement,
   scrim: HTMLElement,
+  background: HTMLElement,
   groups: { category: Category; tools: Tool[] }[],
 ): Sidebar {
   const links = new Map<string, HTMLAnchorElement>();
@@ -40,6 +41,8 @@ export function mountSidebar(
   function open(): void {
     document.body.classList.add('drawer-open');
     scrim.hidden = false;
+    // Modal: the page behind the scrim is neither focusable nor read by screen readers.
+    background.inert = true;
     menuButton.setAttribute('aria-expanded', 'true');
     const target = nav.querySelector<HTMLElement>('[aria-current="page"]') ?? links.values().next().value;
     target?.focus();
@@ -49,6 +52,7 @@ export function mountSidebar(
     if (!document.body.classList.contains('drawer-open')) return;
     document.body.classList.remove('drawer-open');
     scrim.hidden = true;
+    background.inert = false;
     menuButton.setAttribute('aria-expanded', 'false');
     if (modal.matches) menuButton.focus();
   }

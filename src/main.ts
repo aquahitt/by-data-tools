@@ -23,7 +23,7 @@ const title = byId('tool-title');
 const container = byId('tool');
 const menuButton = byId('menu-button');
 menuButton.append(mdIcon('menu'));
-const sidebar = mountSidebar(byId('sidebar'), menuButton, byId('scrim'), toolsByCategory());
+const sidebar = mountSidebar(byId('sidebar'), menuButton, byId('scrim'), byId('content'), toolsByCategory());
 
 let current: { toolId: string; page: ToolPage } | null = null;
 
