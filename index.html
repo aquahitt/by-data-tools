@@ -3,9 +3,30 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="Проверка, разбор и генерация идентификационного номера паспорта Республики Беларусь" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23006a60'/%3E%3C/svg%3E" />
     <title>Идентификационный номер РБ</title>
   </head>
   <body>
+    <header class="top">
+      <h1>Идентификационный номер РБ</h1>
+      <div id="format-switch"></div>
+    </header>
+    <main>
+      <p id="format-notice" class="notice" hidden></p>
+      <section class="card" aria-labelledby="validate-title">
+        <h2 id="validate-title">Проверка и разбор</h2>
+        <div id="validate"></div>
+      </section>
+      <section class="card" aria-labelledby="generate-title">
+        <h2 id="generate-title">Генерация</h2>
+        <div id="generate"></div>
+      </section>
+    </main>
+    <footer class="foot">
+      Номер обрабатывается только в вашем браузере и никуда не отправляется. Инструмент для тестовых данных.
+    </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

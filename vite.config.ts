@@ -5,7 +5,8 @@ const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "font-src 'self'",
+  // Vite inlines small font subsets as data: URIs.
+  "font-src 'self' data:",
   "img-src 'self' data:",
   "connect-src 'none'",
   "object-src 'none'",

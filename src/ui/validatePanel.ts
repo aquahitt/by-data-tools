@@ -1,0 +1,79 @@
+import type { FormatId, FormatModule, Issue, ValidationResult } from '../core/types';
+import { suggestOtherFormat } from '../formats';
+import { el } from './dom';
+import { mdIcon } from './icons';
+
+export interface ValidatePanel {
+  setFormat(format: FormatModule): void;
+  check(value: string): void;
+}
+
+export function mountValidatePanel(root: HTMLElement, onSwitchFormat: (id: FormatId) => void): ValidatePanel {
+  const field = el('md-outlined-text-field', {
+    label: 'Идентификационный номер',
+    'supporting-text': 'Пробелы, дефисы и регистр не важны',
+    autocomplete: 'off',
+    spellcheck: 'false',
+  });
+  const button = el('md-filled-button', {}, 'Проверить');
+  const result = el('div', { class: 'result', 'aria-live': 'polite' });
+  root.append(el('div', { class: 'input-row' }, field, button), result);
+
+  let format: FormatModule | null = null;
+  let timer: number | undefined;
+  const run = () => render(field.value);
+  field.addEventListener('input', () => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(run, 300);
+  });
+  field.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') run();
+  });
+  button.addEventListener('click', run);
+
+  function issueList(issues: Issue[], kind: 'error' | 'warning'): HTMLElement {
+    return el(
+      'ul',
+      { class: `issues ${kind}` },
+      ...issues.map((i) => el('li', {}, mdIcon(kind), i.position ? `Позиция ${i.position}: ${i.message}` : i.message)),
+    );
+  }
+
+  function statusLine(r: ValidationResult): HTMLElement {
+    if (!r.valid) return el('p', { class: 'status error' }, mdIcon('error'), 'Номер невалиден');
+    if (r.warnings.length) return el('p', { class: 'status warning' }, mdIcon('warning'), 'Номер валиден, есть предупреждения');
+    return el('p', { class: 'status ok' }, mdIcon('check'), 'Номер валиден');
+  }
+
+  function render(input: string): void {
+    result.replaceChildren();
+    if (!format || input.trim() === '') return;
+    const r = format.validate(input);
+    result.append(statusLine(r));
+    if (r.errors.length) result.append(issueList(r.errors, 'error'));
+    if (r.warnings.length) result.append(issueList(r.warnings, 'warning'));
+    const other = suggestOtherFormat(input, format.id);
+    if (other) {
+      const switchButton = el('md-text-button', {}, 'Переключить');
+      switchButton.addEventListener('click', () => onSwitchFormat(other.id));
+      result.append(el('p', { class: 'hint' }, `Похоже на формат «${other.title}».`, switchButton));
+    }
+    const parsed = format.parse(input);
+    if (parsed) {
+      const rows = parsed.map((f) => el('tr', {}, el('th', { scope: 'row' }, f.label), el('td', {}, f.value)));
+      result.append(el('table', { class: 'parsed' }, el('tbody', {}, ...rows)));
+    }
+  }
+
+  return {
+    setFormat(f) {
+      format = f;
+      render(field.value);
+    },
+    check(value) {
+      field.value = value;
+      render(value);
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    },
+  };
+}
