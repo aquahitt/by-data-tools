@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ibanCheckDigits } from '../src/core/checkDigit';
-import { mulberry32 } from '../src/core/random';
+import { mulberry32, pad } from '../src/core/random';
 import { ibanBy } from '../src/formats/iban';
 
 const codes = (input: string) => ibanBy.validate(input).errors.map((e) => e.code);
@@ -83,5 +83,34 @@ describe('ibanBy.generate', () => {
         account: 'Шестнадцать латинских букв или цифр',
       },
     });
+  });
+});
+
+describe('ibanBy check digits outside 02..98', () => {
+  // ISO 13616 digits are 98 - (n mod 97), i.e. 02..98; 00, 01 and 99 pass "mod 97 = 1" for some BBANs but are invalid.
+  const bbanWith = (digits: string) => {
+    for (let i = 0; ; i++) {
+      const bban = `AKBB3012${pad(i, 16)}`;
+      if (ibanCheckDigits('BY', bban) === digits) return bban;
+    }
+  };
+
+  it.each([
+    ['00', '97'],
+    ['01', '98'],
+    ['99', '02'],
+  ])('rejects %s where %s is correct', (given, correct) => {
+    const r = ibanBy.validate(`BY${given}${bbanWith(correct)}`);
+    expect(r.valid).toBe(false);
+    expect(r.errors.map((e) => e.code)).toEqual(['CHECK_DIGITS']);
+  });
+});
+
+describe('ibanBy Cyrillic country code', () => {
+  it('replaces a Cyrillic ВУ with BY and warns', () => {
+    const r = ibanBy.validate('ВУ30 NBRB 3200 0079 5001 9000 0000');
+    expect(r.valid).toBe(true);
+    expect(r.normalized).toBe('BY30NBRB32000079500190000000');
+    expect(r.warnings.map((w) => w.code)).toEqual(['CYRILLIC_REPLACED']);
   });
 });

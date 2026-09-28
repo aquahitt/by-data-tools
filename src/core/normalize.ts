@@ -2,7 +2,7 @@ import type { Issue } from './types';
 
 // Latin letters used by the formats that have a Cyrillic twin users paste by accident.
 const CYRILLIC_TO_LATIN: Record<string, string> = {
-  А: 'A', В: 'B', С: 'C', Е: 'E', Н: 'H', К: 'K', М: 'M', О: 'O', Р: 'P', Т: 'T',
+  А: 'A', В: 'B', С: 'C', Е: 'E', Н: 'H', К: 'K', М: 'M', О: 'O', Р: 'P', Т: 'T', У: 'Y',
 };
 
 // Separators people paste from documents: whitespace (incl. BOM), hyphen-minus, soft hyphen,

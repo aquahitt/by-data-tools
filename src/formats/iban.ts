@@ -1,4 +1,4 @@
-import { ibanCheckDigits, ibanMod97 } from '../core/checkDigit';
+import { ibanCheckDigits } from '../core/checkDigit';
 import { resolveFields } from '../core/fields';
 import { normalize } from '../core/normalize';
 import { pad, pick, randInt } from '../core/random';
@@ -98,7 +98,8 @@ function validate(input: string): ValidationResult {
     const v = n.value;
     if (v.slice(0, 2) !== COUNTRY) {
       errors.push({ code: 'COUNTRY', message: `Код страны должен быть «BY», получено «${v.slice(0, 2)}»`, position: 1 });
-    } else if (ibanMod97(v) !== 1) {
+    } else if (v.slice(2, 4) !== ibanCheckDigits(COUNTRY, v.slice(4))) {
+      // Compare with the computed digits, not "mod 97 = 1": that also admits 00, 01 and 99 (ISO 13616: 02..98).
       const expected = ibanCheckDigits(COUNTRY, v.slice(4));
       errors.push({ code: 'CHECK_DIGITS', message: `Контрольные цифры ${v.slice(2, 4)}, должны быть ${expected}`, position: 3 });
     }
