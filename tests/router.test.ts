@@ -38,7 +38,7 @@ describe('resolveRoute', () => {
     expect(resolve('#/unp')).toEqual({ toolId: 'unp', format: null });
   });
 
-  it.each(['', '#/unknown', '#/phone'])('falls back to the default section for %j', (hash) => {
+  it.each(['', '#/unknown', '#/nope'])('falls back to the default section for %j', (hash) => {
     expect(resolve(hash)).toEqual({ toolId: 'personal-number', format: null });
   });
 

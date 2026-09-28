@@ -1,5 +1,5 @@
 import type { FormatModule } from '../core/types';
-import { IBAN_FORMATS, PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS, UNP_FORMATS } from '../formats';
+import { IBAN_FORMATS, PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS, PHONE_FORMATS, UNP_FORMATS } from '../formats';
 
 // The navigation menu: categories and sections, in display order. A section without formats is "скоро".
 
@@ -42,7 +42,7 @@ export const TOOLS: Tool[] = [
   },
   { id: 'unp', title: 'УНП', category: 'organizations', inputLabel: 'УНП', formats: UNP_FORMATS },
   { id: 'iban', title: 'IBAN / номер счёта', category: 'finance', inputLabel: 'IBAN', formats: IBAN_FORMATS },
-  { id: 'phone', title: 'Телефон', category: 'contacts', inputLabel: 'Номер телефона', formats: [] },
+  { id: 'phone', title: 'Телефон', category: 'contacts', inputLabel: 'Номер телефона', formats: PHONE_FORMATS },
 ];
 
 export const DEFAULT_TOOL_ID = 'personal-number';

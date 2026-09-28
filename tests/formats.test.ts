@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { IBAN_FORMATS, PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS, suggestOtherFormat, UNP_FORMATS } from '../src/formats';
+import {
+  IBAN_FORMATS,
+  PASSPORT_FORMATS,
+  PERSONAL_NUMBER_FORMATS,
+  PHONE_FORMATS,
+  suggestOtherFormat,
+  UNP_FORMATS,
+} from '../src/formats';
 import { mulberry32 } from '../src/core/random';
 
-const ALL = [...PERSONAL_NUMBER_FORMATS, ...PASSPORT_FORMATS, ...UNP_FORMATS, ...IBAN_FORMATS];
+const ALL = [...PERSONAL_NUMBER_FORMATS, ...PASSPORT_FORMATS, ...UNP_FORMATS, ...IBAN_FORMATS, ...PHONE_FORMATS];
 
 describe('generated numbers', () => {
   for (const format of ALL) {
@@ -56,5 +63,10 @@ describe('suggestOtherFormat', () => {
   it('suggests the individual UNP format for an individual number checked as organization', () => {
     expect(suggestOtherFormat('MA1953684', 'organization', UNP_FORMATS)?.id).toBe('individual');
     expect(suggestOtherFormat('200988541', 'individual', UNP_FORMATS)?.id).toBe('organization');
+  });
+
+  it('suggests the landline format for a Minsk number checked as mobile', () => {
+    expect(suggestOtherFormat('+375 17 234-56-78', 'mobile', PHONE_FORMATS)?.id).toBe('landline');
+    expect(suggestOtherFormat('+375 29 123-45-67', 'landline', PHONE_FORMATS)?.id).toBe('mobile');
   });
 });
