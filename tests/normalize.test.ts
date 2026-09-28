@@ -53,4 +53,10 @@ describe('normalize', () => {
     expect(r.errors[0].message).toBe('Недопустимый невидимый символ U+2063');
     expect(r.errors[0].position).toBe(8);
   });
+
+  it('replaces Cyrillic О and Т used in the second sign of an individual UNP', () => {
+    const r = normalize('МО1953684');
+    expect(r.value).toBe('MO1953684');
+    expect(normalize('МТ0000001').value).toBe('MT0000001');
+  });
 });

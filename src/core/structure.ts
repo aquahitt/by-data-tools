@@ -3,6 +3,8 @@ import type { Issue } from './types';
 // D = digit, L = Latin letter.
 export const PERSONAL_NUMBER_TEMPLATE = 'DDDDDDDLDDDLLD'; // ЦЦЦЦЦЦЦ Б ЦЦЦ ББ Ц
 export const PASSPORT_NUMBER_TEMPLATE = 'LLDDDDDDD'; //       ББ ЦЦЦЦЦЦЦ
+export const UNP_ORGANIZATION_TEMPLATE = 'DDDDDDDDD'; //  ЦЦЦЦЦЦЦЦ К
+export const UNP_INDIVIDUAL_TEMPLATE = 'LLDDDDDDD'; //    ББ ЦЦЦЦЦЦ К
 
 export function structureIssues(value: string, template: string): Issue[] {
   if (value.length !== template.length) {

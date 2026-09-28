@@ -34,7 +34,11 @@ describe('resolveRoute', () => {
     expect(resolve('#/passport-number?format=biometric')).toEqual({ toolId: 'passport-number', format: 'biometric' });
   });
 
-  it.each(['', '#/unknown', '#/unp', '#/iban', '#/phone'])('falls back to the default section for %j', (hash) => {
+  it('opens the UNP section once it is implemented', () => {
+    expect(resolve('#/unp')).toEqual({ toolId: 'unp', format: null });
+  });
+
+  it.each(['', '#/unknown', '#/iban', '#/phone'])('falls back to the default section for %j', (hash) => {
     expect(resolve(hash)).toEqual({ toolId: 'personal-number', format: null });
   });
 

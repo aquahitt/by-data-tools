@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS, suggestOtherFormat } from '../src/formats';
+import { PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS, suggestOtherFormat, UNP_FORMATS } from '../src/formats';
 import { mulberry32 } from '../src/core/random';
 
-const ALL = [...PERSONAL_NUMBER_FORMATS, ...PASSPORT_FORMATS];
+const ALL = [...PERSONAL_NUMBER_FORMATS, ...PASSPORT_FORMATS, ...UNP_FORMATS];
 
 describe('generated numbers', () => {
   for (const format of ALL) {
@@ -51,5 +51,10 @@ describe('suggestOtherFormat', () => {
 
   it('suggests nothing for an unknown current format', () => {
     expect(suggestOtherFormat('7000000A000PB1', 'nope', PERSONAL_NUMBER_FORMATS)).toBeNull();
+  });
+
+  it('suggests the individual UNP format for an individual number checked as organization', () => {
+    expect(suggestOtherFormat('MA1953684', 'organization', UNP_FORMATS)?.id).toBe('individual');
+    expect(suggestOtherFormat('200988541', 'individual', UNP_FORMATS)?.id).toBe('organization');
   });
 });

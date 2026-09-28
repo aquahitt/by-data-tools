@@ -1,5 +1,5 @@
 import type { FormatModule } from '../core/types';
-import { PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS } from '../formats';
+import { PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS, UNP_FORMATS } from '../formats';
 
 // The navigation menu: categories and sections, in display order. A section without formats is "скоро".
 
@@ -40,7 +40,7 @@ export const TOOLS: Tool[] = [
     inputLabel: 'Серия и номер паспорта',
     formats: PASSPORT_FORMATS,
   },
-  { id: 'unp', title: 'УНП', category: 'organizations', inputLabel: 'УНП', formats: [] },
+  { id: 'unp', title: 'УНП', category: 'organizations', inputLabel: 'УНП', formats: UNP_FORMATS },
   { id: 'iban', title: 'IBAN / номер счёта', category: 'finance', inputLabel: 'IBAN', formats: [] },
   { id: 'phone', title: 'Телефон', category: 'contacts', inputLabel: 'Номер телефона', formats: [] },
 ];
