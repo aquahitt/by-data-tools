@@ -91,6 +91,7 @@ export function mountGeneratePanel(
     const check = el('md-text-button', {}, 'Проверить');
     check.addEventListener('click', () => onCheck(value));
     output.append(el('output', { class: 'generated' }, value), copy, check);
+    if (r.hint) output.append(el('span', { class: 'gen-hint' }, r.hint));
   }
 
   generateButton.addEventListener('click', () =>

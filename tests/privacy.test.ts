@@ -12,7 +12,15 @@ function sources(dir: string): string[] {
 }
 
 const NETWORK = [/\bfetch\s*\(/, /XMLHttpRequest/, /sendBeacon/, /WebSocket/, /EventSource/];
-const PERSISTENCE = [/localStorage/, /sessionStorage/, /history\.\w+State/, /document\.cookie/, /indexedDB/];
+const PERSISTENCE = [
+  /localStorage/,
+  /sessionStorage/,
+  /history\.\w+State/,
+  /document\.cookie/,
+  /indexedDB/,
+  /location\.(hash|href|search)\s*=(?!=)/,
+  /location\.(assign|replace)\s*\(/,
+];
 
 // The spec promises the number never leaves the browser and is never persisted.
 describe('privacy', () => {
@@ -31,9 +39,9 @@ describe('privacy', () => {
     }
   });
 
-  it('formatState stores only the format id', () => {
+  it('formatState stores only format ids', () => {
     const code = readFileSync(join(SRC, 'ui', 'formatState.ts'), 'utf8');
     expect(code.match(/setItem\(/g)).toHaveLength(1);
-    expect(code).toContain('setItem(STORAGE_KEY, id)');
+    expect(code).toContain('setItem(storageKey(toolId), formatId)');
   });
 });

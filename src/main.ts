@@ -10,33 +10,48 @@ import '@material/web/select/select-option.js';
 import '@material/web/textfield/outlined-text-field.js';
 import './ui/theme.css';
 
-import type { FormatId } from './core/types';
-import { PERSONAL_NUMBER_FORMATS } from './formats';
-import { persistFormat, readStoredFormat, resolveInitialFormat } from './ui/formatState';
-import { mountFormatSwitch } from './ui/formatSwitch';
-import { mountGeneratePanel } from './ui/generatePanel';
-import { mountValidatePanel } from './ui/validatePanel';
+import { DEFAULT_TOOL_ID, findTool, TOOLS, toolsByCategory } from './tools';
+import { persistFormat, readStoredFormats, resolveFormatId } from './ui/formatState';
+import { mdIcon } from './ui/icons';
+import { resolveRoute } from './ui/router';
+import { mountSidebar } from './ui/sidebar';
+import { mountToolPage, type ToolPage } from './ui/toolPage';
 
 const byId = (id: string) => document.getElementById(id) as HTMLElement;
 
-const notice = byId('format-notice');
-const validatePanel = mountValidatePanel(byId('validate'), {
-  formats: PERSONAL_NUMBER_FORMATS,
-  inputLabel: 'Идентификационный номер',
-  onSwitchFormat: (id) => setFormat(id),
-});
-const generatePanel = mountGeneratePanel(byId('generate'), (value) => validatePanel.check(value));
-const initial = resolveInitialFormat(location.search, readStoredFormat());
-const formatSwitch = mountFormatSwitch(byId('format-switch'), PERSONAL_NUMBER_FORMATS, initial, (id) => setFormat(id));
+const title = byId('tool-title');
+const container = byId('tool');
+const menuButton = byId('menu-button');
+menuButton.append(mdIcon('menu'));
+const sidebar = mountSidebar(byId('sidebar'), menuButton, byId('scrim'), toolsByCategory());
 
-function setFormat(id: FormatId): void {
-  const format = PERSONAL_NUMBER_FORMATS.find((f) => f.id === id)!;
-  persistFormat(id);
-  formatSwitch.set(id);
-  notice.textContent = format.notice ?? '';
-  notice.hidden = !format.notice;
-  validatePanel.setFormat(format);
-  generatePanel.setFormat(format);
+let current: { toolId: string; page: ToolPage } | null = null;
+
+function show(): void {
+  const route = resolveRoute(location.hash, location.search, TOOLS, DEFAULT_TOOL_ID);
+  const tool = findTool(route.toolId)!;
+  const { stored, legacy } = readStoredFormats(tool.id);
+  const formatId = resolveFormatId(tool.id, tool.formats, route.format, stored, legacy);
+  persistFormat(tool.id, formatId);
+  const format = tool.formats.find((f) => f.id === formatId)!;
+
+  if (current?.toolId === tool.id) {
+    current.page.setFormat(format);
+    return;
+  }
+
+  const firstRender = current === null;
+  container.replaceChildren();
+  const page = mountToolPage(container, tool, format, (id) => {
+    persistFormat(tool.id, id);
+    page.setFormat(tool.formats.find((f) => f.id === id)!);
+  });
+  current = { toolId: tool.id, page };
+  title.textContent = tool.title;
+  document.title = `${tool.title} — by-data-tools`;
+  sidebar.setActive(tool.id);
+  if (!firstRender) title.focus();
 }
 
-setFormat(initial);
+window.addEventListener('hashchange', show);
+show();

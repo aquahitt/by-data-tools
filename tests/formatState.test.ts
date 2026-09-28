@@ -1,24 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { isFormatId, resolveInitialFormat, withFormatParam } from '../src/ui/formatState';
+import { PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS } from '../src/formats';
+import { resolveFormatId, storageKey } from '../src/ui/formatState';
 
 describe('formatState', () => {
-  it('URL wins over storage', () => {
-    expect(resolveInitialFormat('?format=legacy', 'modern')).toBe('legacy');
+  it('keys storage per section', () => {
+    expect(storageKey('passport-number')).toBe('by-data-tools:format:passport-number');
   });
 
-  it('falls back to storage, then to modern', () => {
-    expect(resolveInitialFormat('', 'legacy')).toBe('legacy');
-    expect(resolveInitialFormat('', null)).toBe('modern');
+  it('prefers the requested format', () => {
+    expect(resolveFormatId('passport-number', PASSPORT_FORMATS, 'biometric', '1996', null)).toBe('biometric');
   });
 
-  it('ignores unknown values', () => {
-    expect(resolveInitialFormat('?format=x', 'y')).toBe('modern');
-    expect(isFormatId('modern')).toBe(true);
-    expect(isFormatId('other')).toBe(false);
+  it('falls back to the stored format, then to the first one', () => {
+    expect(resolveFormatId('passport-number', PASSPORT_FORMATS, null, 'biometric', null)).toBe('biometric');
+    expect(resolveFormatId('passport-number', PASSPORT_FORMATS, null, null, null)).toBe('1996');
   });
 
-  it('sets only the format param and keeps others', () => {
-    expect(withFormatParam('?a=1', 'legacy')).toBe('?a=1&format=legacy');
-    expect(withFormatParam('?format=modern', 'legacy')).toBe('?format=legacy');
+  it('ignores a format that belongs to another section', () => {
+    expect(resolveFormatId('passport-number', PASSPORT_FORMATS, 'legacy', 'modern', null)).toBe('1996');
+  });
+
+  it('reads the first-version key for the personal number only', () => {
+    expect(resolveFormatId('personal-number', PERSONAL_NUMBER_FORMATS, null, null, 'legacy')).toBe('legacy');
+    expect(resolveFormatId('passport-number', PASSPORT_FORMATS, null, null, 'biometric')).toBe('1996');
+  });
+
+  it('lets the per-section key win over the first-version key', () => {
+    expect(resolveFormatId('personal-number', PERSONAL_NUMBER_FORMATS, null, 'modern', 'legacy')).toBe('modern');
   });
 });
