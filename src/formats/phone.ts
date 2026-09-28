@@ -27,6 +27,8 @@ const ZONES: Record<string, string> = {
 interface Centre {
   code: string;
   city: string;
+  /** Genitive, for "Для Бреста — 6 цифр". */
+  cityOf: string;
   /** First subscriber digits used by the generator (not enforced by validation). */
   firstDigits: string;
 }
@@ -34,24 +36,24 @@ interface Centre {
 // Minsk: code 17 + seven digits starting with 2 or 3 (per the numbering-plan summary); regional centres:
 // three-digit code + six digits. First digits 2..9 for the centres are this tool's choice, not a published rule.
 const CENTRES: Centre[] = [
-  { code: '17', city: 'г. Минск', firstDigits: '23' },
-  { code: '152', city: 'Гродно', firstDigits: '23456789' },
-  { code: '162', city: 'Брест', firstDigits: '23456789' },
-  { code: '212', city: 'Витебск', firstDigits: '23456789' },
-  { code: '222', city: 'Могилёв', firstDigits: '23456789' },
-  { code: '232', city: 'Гомель', firstDigits: '23456789' },
+  { code: '17', city: 'г. Минск', cityOf: 'Минска', firstDigits: '23' },
+  { code: '152', city: 'Гродно', cityOf: 'Гродно', firstDigits: '23456789' },
+  { code: '162', city: 'Брест', cityOf: 'Бреста', firstDigits: '23456789' },
+  { code: '212', city: 'Витебск', cityOf: 'Витебска', firstDigits: '23456789' },
+  { code: '222', city: 'Могилёв', cityOf: 'Могилёва', firstDigits: '23456789' },
+  { code: '232', city: 'Гомель', cityOf: 'Гомеля', firstDigits: '23456789' },
 ];
 
 type National = { national: string; errors: [] } | { national: null; errors: Issue[] };
 
-/** Accepts +375 / 375 / 00375, 8 0XX, 0XX or a bare nine-digit national number. */
+/** Accepts +375 / 375 / 00375 (optionally with the trunk 0, as in "+375 (029)"), 8 0XX, 0XX or nine bare digits. */
 function toNational(input: string): National {
   const cleaned = input.trim().replace(SEPARATORS, '');
   const bad = [...cleaned].findIndex((ch) => !/\d/.test(ch));
   if (bad >= 0) {
     return { national: null, errors: [{ code: 'INVALID_CHAR', message: `Недопустимый символ «${cleaned[bad]}»`, position: bad + 1 }] };
   }
-  const m = /^(?:00375|375|80|0)?(\d{9})$/.exec(cleaned);
+  const m = /^(?:(?:00)?3750?|80|0)?(\d{9})$/.exec(cleaned);
   if (!m || (cleaned.length === 9 && cleaned.startsWith('0'))) {
     return {
       national: null,
@@ -204,7 +206,11 @@ function generateLandline(partial: Record<string, string>, rng: Rng): GenerateRe
   const centre = CENTRES.find((c) => c.code === values.city)!;
   const length = 9 - centre.code.length;
   if (values.subscriber.length !== length) {
-    return { ok: false, fieldErrors: { subscriber: `Для ${centre.city === 'г. Минск' ? 'Минска' : centre.city} — ${length} цифр` } };
+    return { ok: false, fieldErrors: { subscriber: `Для ${centre.cityOf} — ${length} цифр` } };
+  }
+  // Only for Minsk does the first digit change what parse reports (city vs Minsk-region district code).
+  if (centre.code === '17' && !centre.firstDigits.includes(values.subscriber[0])) {
+    return { ok: false, fieldErrors: { subscriber: 'Для Минска первая цифра — 2 или 3' } };
   }
   const national = `${centre.code}${values.subscriber}`;
   return { ok: true, value: `+375${national}`, hint: hintFor(national, centre.code.length) };

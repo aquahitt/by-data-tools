@@ -136,3 +136,29 @@ describe('phoneLandline.generate', () => {
     });
   });
 });
+
+describe('phone review fixes', () => {
+  it.each(['+375 (029) 123-45-67', '+375 0 29 1234567', '3750291234567'])('accepts the trunk zero after +375 in %j', (input) => {
+    expect(phoneMobile.validate(input).normalized).toBe('+375291234567');
+    expect(phoneMobile.validate(input).valid).toBe(true);
+  });
+
+  it.each([
+    ['17', '234567', 'Для Минска — 7 цифр'],
+    ['162', '1234567', 'Для Бреста — 6 цифр'],
+    ['212', '1234567', 'Для Витебска — 6 цифр'],
+    ['222', '1234567', 'Для Могилёва — 6 цифр'],
+    ['232', '1234567', 'Для Гомеля — 6 цифр'],
+    ['152', '1234567', 'Для Гродно — 6 цифр'],
+  ])('names city %s in the genitive', (city, subscriber, message) => {
+    expect(phoneLandline.generate({ city, subscriber }, mulberry32(1))).toEqual({ ok: false, fieldErrors: { subscriber: message } });
+  });
+
+  it('refuses a Minsk subscriber number that parse would call a district code', () => {
+    expect(phoneLandline.generate({ city: '17', subscriber: '1234567' }, mulberry32(1))).toEqual({
+      ok: false,
+      fieldErrors: { subscriber: 'Для Минска первая цифра — 2 или 3' },
+    });
+  });
+});
+
