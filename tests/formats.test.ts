@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS, suggestOtherFormat, UNP_FORMATS } from '../src/formats';
+import { IBAN_FORMATS, PASSPORT_FORMATS, PERSONAL_NUMBER_FORMATS, suggestOtherFormat, UNP_FORMATS } from '../src/formats';
 import { mulberry32 } from '../src/core/random';
 
-const ALL = [...PERSONAL_NUMBER_FORMATS, ...PASSPORT_FORMATS, ...UNP_FORMATS];
+const ALL = [...PERSONAL_NUMBER_FORMATS, ...PASSPORT_FORMATS, ...UNP_FORMATS, ...IBAN_FORMATS];
 
 describe('generated numbers', () => {
   for (const format of ALL) {

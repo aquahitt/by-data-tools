@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { charValue, checkDigit731, icaoCheckDigit } from '../src/core/checkDigit';
+import { charValue, checkDigit731, ibanCheckDigits, ibanMod97, icaoCheckDigit } from '../src/core/checkDigit';
 
 describe('checkDigit731', () => {
   // Hand-computed vectors (spec, "Контрольная цифра").
@@ -45,5 +45,21 @@ describe('icaoCheckDigit', () => {
   it('treats the < filler as 0', () => {
     expect(charValue('<')).toBe(0);
     expect(icaoCheckDigit('L898902C<')).toBe(3);
+  });
+});
+
+describe('IBAN mod 97', () => {
+  it.each([
+    ['GB82WEST12345698765432', 1], // ISO 13616 example
+    ['BY30NBRB32000079500190000000', 1], // NBRB directory: correspondent account of Belarusbank
+    ['BY28NBRB32000027000170000000', 1],
+    ['BY31NBRB32000079500190000000', 2],
+  ])('%s -> %i', (iban, expected) => {
+    expect(ibanMod97(iban)).toBe(expected);
+  });
+
+  it('computes check digits for a country and BBAN', () => {
+    expect(ibanCheckDigits('BY', 'AKBB30120000000000000000')).toBe('75');
+    expect(ibanCheckDigits('BY', 'NBRB32000079500190000000')).toBe('30');
   });
 });

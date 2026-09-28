@@ -21,3 +21,18 @@ export function checkDigit731(body: string): number {
   if (body.length !== 13) throw new RangeError(`Expected 13 characters, got ${body.length}`);
   return icaoCheckDigit(body);
 }
+
+/** ISO 13616 remainder of an IBAN: first four characters moved to the end, letters as 10..35, mod 97. Valid = 1. */
+export function ibanMod97(iban: string): number {
+  let remainder = 0;
+  for (const ch of iban.slice(4) + iban.slice(0, 4)) {
+    const value = charValue(ch);
+    remainder = (remainder * (value < 10 ? 10 : 100) + value) % 97;
+  }
+  return remainder;
+}
+
+/** Two check digits that make `country + digits + bban` a valid IBAN. */
+export function ibanCheckDigits(country: string, bban: string): string {
+  return String(98 - ibanMod97(`${country}00${bban}`)).padStart(2, '0');
+}
