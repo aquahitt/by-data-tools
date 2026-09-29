@@ -7,8 +7,9 @@ import type { FieldSpec, FormatModule, GenerateResult, Issue, ParsedField, Rng, 
 // as summarised by ru.wikipedia.org "Телефонный план нумерации Беларуси" and the A1 dialling rules:
 // +375 and a nine-digit national number. No check digit — only the shape and the codes are verified.
 
-// Characters people put between digits, incl. invisible ones pasted from documents.
-const SEPARATOR = /[\s\-\u00AD\u200B-\u200D\u2010-\u2015\u2060\u2212()./]/;
+// Characters people put between digits, incl. invisible ones pasted from documents and the bidi marks
+// that macOS/iOS contacts and messengers wrap phone numbers in.
+const SEPARATOR = /[\s\-\u00AD\u200B-\u200F\u202A-\u202E\u2010-\u2015\u2060\u2066-\u2069\u2212\uFEFF()./]/;
 const SEPARATORS = new RegExp(SEPARATOR.source, 'g');
 
 // Code 29 is shared; the operator follows the first subscriber digit.
@@ -51,14 +52,14 @@ type National = { national: string; errors: [] } | { national: null; errors: Iss
 
 /** Accepts +375 / 375 / 00375 (optionally with the trunk 0, as in "+375 (029)"), 8 0XX, 0XX or nine bare digits. */
 function toNational(input: string): National {
-  const text = input.trim();
   const errors: Issue[] = [];
   let digits = '';
   let plus = false;
   // Positions refer to the text as typed, so a message points at the character the user sees.
-  [...text].forEach((ch, i) => {
+  // A '+' counts as the leading one while nothing but separators precedes it: "(+375 29)", bidi marks.
+  [...input].forEach((ch, i) => {
     if (/\d/.test(ch)) digits += ch;
-    else if (ch === '+' && i === 0) plus = true;
+    else if (ch === '+' && !plus && digits === '') plus = true;
     else if (!SEPARATOR.test(ch)) errors.push({ code: 'INVALID_CHAR', message: describeChar(ch), position: i + 1 });
   });
   if (errors.length > 0) return { national: null, errors };

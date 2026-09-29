@@ -208,3 +208,20 @@ describe('phone input follow-ups', () => {
     }
   });
 });
+
+describe('phone paste follow-ups', () => {
+  it.each([
+    ['bidi embedding', '\u202a+375 29 123-45-67\u202c'],
+    ['left-to-right mark', '\u200e+375291234567'],
+    ['plus inside a bracket', '(+375 29) 123-45-67'],
+  ])('accepts a number with %s', (_name, input) => {
+    expect(phoneMobile.validate(input)).toEqual({ valid: true, normalized: '+375291234567', errors: [], warnings: [] });
+  });
+
+  it('counts positions in the text as typed, leading spaces included', () => {
+    expect(phoneMobile.validate('  +375 29 12x 45 67').errors).toEqual([
+      { code: 'INVALID_CHAR', message: 'Недопустимый символ «x»', position: 13 },
+    ]);
+  });
+});
+

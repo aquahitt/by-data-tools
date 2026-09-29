@@ -5,8 +5,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# configure-pages in the build job reads the Pages API; job-level least privilege is left for a change that can be
+# tried with workflow_dispatch first.
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
@@ -33,10 +37,6 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    # Only the deploy job may write to Pages.
-    permissions:
-      pages: write
-      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

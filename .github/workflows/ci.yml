@@ -7,7 +7,8 @@ on:
 
 # A push to a branch with an open PR triggers both events; keep only the newest run per branch.
 concurrency:
-  group: ci-${{ github.head_ref || github.ref_name }}
+  # Keyed by event too: a push run must not cancel the pull-request run of the same branch, or vice versa.
+  group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
