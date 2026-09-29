@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ibanCheckDigits } from '../src/core/checkDigit';
 import { mulberry32, pad } from '../src/core/random';
-import { ibanBy } from '../src/formats/iban';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { BANKS, ibanBy } from '../src/formats/iban';
 
 const codes = (input: string) => ibanBy.validate(input).errors.map((e) => e.code);
 const withCheck = (bban: string) => `BY${ibanCheckDigits('BY', bban)}${bban}`;
@@ -114,3 +116,46 @@ describe('ibanBy Cyrillic country code', () => {
     expect(r.warnings.map((w) => w.code)).toEqual(['CYRILLIC_REPLACED']);
   });
 });
+
+describe('ibanBy review follow-ups', () => {
+  it('parses a foreign IBAN without Belarusian bank and balance tables', () => {
+    expect(ibanBy.parse('DE30NBRB32000079500190000000')).toEqual([
+      { label: 'Страна', value: 'DE — не Беларусь' },
+      { label: 'Контрольные цифры', value: '30 — должны быть 72' },
+      { label: 'Запись группами', value: 'DE30 NBRB 3200 0079 5001 9000 0000' },
+    ]);
+  });
+
+  it('adds no bank warning to a foreign IBAN', () => {
+    expect(ibanBy.validate('DE30ABCD32000079500190000000').warnings).toEqual([]);
+  });
+
+  it('strips an IBAN prefix', () => {
+    expect(ibanBy.validate('IBAN BY30NBRB32000079500190000000').valid).toBe(true);
+    expect(ibanBy.validate('iban: BY30 NBRB 3200 0079 5001 9000 0000').valid).toBe(true);
+  });
+
+  it('describes the deposit accounts of non-bank financial and non-commercial organizations', () => {
+    const bban = 'AKBB34010000000000000000';
+    expect(ibanBy.parse(`BY${ibanCheckDigits('BY', bban)}${bban}`)?.[3].value).toBe(
+      '3401 — Вклады (депозиты) до востребования небанковских финансовых организаций',
+    );
+  });
+
+  it('says when Cyrillic letters of the account number were replaced', () => {
+    const r = ibanBy.generate({ bank: 'AKBB', balance: '3012', account: 'АВСЕ000000000000' }, mulberry32(1));
+    expect(r.ok && r.value.slice(12)).toBe('ABCE000000000000');
+    expect(r.ok && r.hint).toContain('кириллические буквы в номере счёта заменены на латинские');
+  });
+
+  it('closes the quotes of «Банк «Решение»»', () => {
+    expect(BANKS.RSHN).toBe('ЗАО «Банк «Решение»»');
+  });
+
+  it('matches the NBRB BIC directory snapshot, minus the currency exchange', () => {
+    const fixture = JSON.parse(readFileSync(join(import.meta.dirname, 'fixtures', 'nbrb-bic-2026-09-28.json'), 'utf8'));
+    const codes = fixture.banks.map((b: { code: string }) => b.code).filter((c: string) => c !== 'BCSX');
+    expect(Object.keys(BANKS).sort()).toEqual(codes.sort());
+  });
+});
+

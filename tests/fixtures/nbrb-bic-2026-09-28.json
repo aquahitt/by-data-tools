@@ -1,0 +1,127 @@
+{
+  "source": "https://www.nbrb.by/payment/bic-rb.xlsx",
+  "downloaded": "2026-09-28",
+  "filter": "status 0, BIC country BY",
+  "banks": [
+    {
+      "bic": "NBRBBY2X",
+      "code": "NBRB",
+      "name": "Национальный банк Республики Беларусь"
+    },
+    {
+      "bic": "SLANBY22",
+      "code": "SLAN",
+      "name": "ЗАО Банк ВТБ (Беларусь)"
+    },
+    {
+      "bic": "REDJBY22",
+      "code": "REDJ",
+      "name": "ЗАО 'Банк РРБ'"
+    },
+    {
+      "bic": "MTBKBY22",
+      "code": "MTBK",
+      "name": "ЗАО 'МТбанк'"
+    },
+    {
+      "bic": "UNBSBY2X",
+      "code": "UNBS",
+      "name": "ЗАО 'БСБ Банк'"
+    },
+    {
+      "bic": "TECNBY22",
+      "code": "TECN",
+      "name": "ОАО 'Технобанк'"
+    },
+    {
+      "bic": "BCSXBY22",
+      "code": "BCSX",
+      "name": "ОАО 'Белорусская валютно-фондовая биржа'"
+    },
+    {
+      "bic": "BRRBBY2X",
+      "code": "BRRB",
+      "name": "ОАО 'Банк развития Республики Беларусь'"
+    },
+    {
+      "bic": "BELBBY2X",
+      "code": "BELB",
+      "name": "ОАО 'Банк БелВЭБ'"
+    },
+    {
+      "bic": "ALFABY2X",
+      "code": "ALFA",
+      "name": "ЗАО 'Альфа-Банк'"
+    },
+    {
+      "bic": "MMBNBY22",
+      "code": "MMBN",
+      "name": "ОАО 'Банк Дабрабыт'"
+    },
+    {
+      "bic": "RSHNBY2X",
+      "code": "RSHN",
+      "name": "ЗАО 'Банк 'Решение'"
+    },
+    {
+      "bic": "BBTKBY2X",
+      "code": "BBTK",
+      "name": "ЗАО 'ТК Банк'"
+    },
+    {
+      "bic": "BPSBBY2X",
+      "code": "BPSB",
+      "name": "ОАО 'Сбер Банк'"
+    },
+    {
+      "bic": "AEBKBY2X",
+      "code": "AEBK",
+      "name": "ЗАО 'Нео Банк Азия'"
+    },
+    {
+      "bic": "IRJSBY22",
+      "code": "IRJS",
+      "name": "ОАО 'СтатусБанк'"
+    },
+    {
+      "bic": "BLBBBY2X",
+      "code": "BLBB",
+      "name": "ОАО 'Белинвестбанк'"
+    },
+    {
+      "bic": "OLMPBY2X",
+      "code": "OLMP",
+      "name": "ОАО 'Белгазпромбанк'"
+    },
+    {
+      "bic": "PJCBBY2X",
+      "code": "PJCB",
+      "name": "Приорбанк' ОАО"
+    },
+    {
+      "bic": "BLNBBY2X",
+      "code": "BLNB",
+      "name": "ОАО 'БНБ-Банк'"
+    },
+    {
+      "bic": "POISBY2X",
+      "code": "POIS",
+      "name": "ОАО 'Паритетбанк'"
+    },
+    {
+      "bic": "AKBBBY2X",
+      "code": "AKBB",
+      "name": "ОАО 'АСБ Беларусбанк'"
+    },
+    {
+      "bic": "ZEPTBY2X",
+      "code": "ZEPT",
+      "name": "ЗАО 'Цептер Банк'"
+    },
+    {
+      "bic": "BAPBBY2X",
+      "code": "BAPB",
+      "name": "ОАО 'Белагропромбанк'"
+    }
+  ]
+}

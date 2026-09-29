@@ -25,7 +25,7 @@ export const BANKS: Record<string, string> = {
   BELB: 'ОАО «Банк БелВЭБ»',
   ALFA: 'ЗАО «Альфа-Банк»',
   MMBN: 'ОАО «Банк Дабрабыт»',
-  RSHN: 'ЗАО «Банк «Решение»',
+  RSHN: 'ЗАО «Банк «Решение»»',
   BBTK: 'ЗАО «ТК Банк»',
   BPSB: 'ОАО «Сбер Банк»',
   AEBK: 'ЗАО «Нео Банк Азия»',
@@ -48,13 +48,20 @@ export const BALANCE_ACCOUNTS: Record<string, string> = {
   '3014': 'Текущие (расчетные) банковские счета физических лиц',
   '3015': 'Текущие (расчетные) банковские счета некоммерческих организаций',
   '3034': 'Текущие (расчетные) банковские счета физических лиц с базовыми условиями обслуживания',
+  '3401': 'Вклады (депозиты) до востребования небанковских финансовых организаций',
   '3402': 'Вклады (депозиты) до востребования коммерческих организаций',
   '3403': 'Вклады (депозиты) до востребования индивидуальных предпринимателей',
   '3404': 'Вклады (депозиты) до востребования физических лиц',
+  '3405': 'Вклады (депозиты) до востребования некоммерческих организаций',
+  '3411': 'Срочные вклады (депозиты) небанковских финансовых организаций',
   '3412': 'Срочные вклады (депозиты) коммерческих организаций',
   '3413': 'Срочные вклады (депозиты) индивидуальных предпринимателей',
   '3414': 'Срочные вклады (депозиты) физических лиц',
+  '3415': 'Срочные вклады (депозиты) некоммерческих организаций',
 };
+
+const PREFIX = /^\s*iban[\s:№#]*/i;
+const normalizeIban = (input: string) => normalize(input.replace(PREFIX, ''));
 
 const grouped = (iban: string) => iban.replace(/(.{4})(?=.)/g, '$1 ');
 
@@ -90,7 +97,7 @@ const fields: FieldSpec[] = [
 ];
 
 function validate(input: string): ValidationResult {
-  const n = normalize(input);
+  const n = normalizeIban(input);
   const errors: Issue[] = [...n.errors];
   const warnings: Issue[] = [...n.warnings];
   if (errors.length === 0) errors.push(...structureIssues(n.value, IBAN_TEMPLATE));
@@ -104,7 +111,8 @@ function validate(input: string): ValidationResult {
       errors.push({ code: 'CHECK_DIGITS', message: `Контрольные цифры ${v.slice(2, 4)}, должны быть ${expected}`, position: 3 });
     }
     const bank = v.slice(4, 8);
-    if (!Object.hasOwn(BANKS, bank)) {
+    // The bank directory is Belarusian; for a foreign IBAN the country error says enough.
+    if (v.slice(0, 2) === COUNTRY && !Object.hasOwn(BANKS, bank)) {
       warnings.push({
         code: 'UNKNOWN_BANK',
         message: `Код банка «${bank}» не найден в справочнике НБРБ (на ${DIRECTORY_DATE})`,
@@ -116,16 +124,24 @@ function validate(input: string): ValidationResult {
 }
 
 function parse(input: string): ParsedField[] | null {
-  const n = normalize(input);
+  const n = normalizeIban(input);
   if (n.errors.length > 0 || structureIssues(n.value, IBAN_TEMPLATE).length > 0) return null;
   const v = n.value;
   const country = v.slice(0, 2);
   const expected = ibanCheckDigits(country, v.slice(4));
   const bank = v.slice(4, 8);
   const balance = v.slice(8, 12);
+  const checkDigits = {
+    label: 'Контрольные цифры',
+    value: v.slice(2, 4) === expected ? `${expected} — верные` : `${v.slice(2, 4)} — должны быть ${expected}`,
+  };
+  if (country !== COUNTRY) {
+    // Positions 5..28 of a foreign IBAN follow that country's layout, not the Belarusian one.
+    return [{ label: 'Страна', value: `${country} — не Беларусь` }, checkDigits, { label: 'Запись группами', value: grouped(v) }];
+  }
   return [
-    { label: 'Страна', value: country === COUNTRY ? 'BY — Республика Беларусь' : `${country} — не Беларусь` },
-    { label: 'Контрольные цифры', value: v.slice(2, 4) === expected ? `${expected} — верные` : `${v.slice(2, 4)} — должны быть ${expected}` },
+    { label: 'Страна', value: 'BY — Республика Беларусь' },
+    checkDigits,
     { label: 'Банк', value: `${bank} — ${BANKS[bank] ?? 'нет в справочнике'}` },
     { label: 'Балансовый счёт', value: `${balance} — ${BALANCE_ACCOUNTS[balance] ?? 'нет в списке распространённых'}` },
     { label: 'Номер счёта в банке', value: v.slice(12) },
@@ -138,7 +154,9 @@ function generate(partial: Record<string, string>, rng: Rng): GenerateResult {
   if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors };
   const bban = `${values.bank}${values.balance}${values.account}`;
   const value = `${COUNTRY}${ibanCheckDigits(COUNTRY, bban)}${bban}`;
-  return { ok: true, value, hint: `В документах: ${grouped(value)}` };
+  const replaced = partial.account?.trim() ? normalize(partial.account).warnings.length > 0 : false;
+  const note = replaced ? ' · кириллические буквы в номере счёта заменены на латинские' : '';
+  return { ok: true, value, hint: `В документах: ${grouped(value)}${note}` };
 }
 
 export const ibanBy: FormatModule = {
