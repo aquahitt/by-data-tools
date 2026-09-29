@@ -5,6 +5,14 @@ on:
   push:
     branches-ignore: [main]
 
+# A push to a branch with an open PR triggers both events; keep only the newest run per branch.
+concurrency:
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
