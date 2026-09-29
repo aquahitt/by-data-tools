@@ -28,7 +28,11 @@ export function mountValidatePanel(root: HTMLElement, options: ValidatePanelOpti
 
   let format: FormatModule | null = null;
   let timer: number | undefined;
-  const run = () => render(field.value);
+  const run = () => {
+    // Enter or the button would otherwise be followed by the pending debounced run.
+    window.clearTimeout(timer);
+    render(field.value);
+  };
   field.addEventListener('input', () => {
     window.clearTimeout(timer);
     timer = window.setTimeout(run, 300);

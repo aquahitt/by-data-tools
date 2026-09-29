@@ -44,4 +44,15 @@ describe('privacy', () => {
     expect(code.match(/setItem\(/g)).toHaveLength(1);
     expect(code).toContain('setItem(storageKey(toolId), formatId)');
   });
+
+  it('URLs are built only by formatState (new URL) and the menu (href to a section id)', () => {
+    for (const file of sources(SRC)) {
+      const name = relative(SRC, file);
+      const code = readFileSync(file, 'utf8');
+      if (name !== join('ui', 'formatState.ts')) expect(/new URL\(/.test(code), `${name} builds a URL`).toBe(false);
+      if (name !== join('ui', 'sidebar.ts')) expect(/['"]?href['"]?\s*:/.test(code), `${name} sets an href`).toBe(false);
+    }
+    expect(readFileSync(join(SRC, 'ui', 'sidebar.ts'), 'utf8')).toContain('href: `#/${tool.id}`');
+  });
 });
+

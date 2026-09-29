@@ -54,6 +54,8 @@ export function mountGeneratePanel(
   }
 
   function setFormat(f: FormatModule): void {
+    // Fields both formats share (same key) keep what the user typed or picked.
+    const previous = new Map([...controls].map(([key, control]) => [key, control.value]));
     format = f;
     controls = new Map();
     fieldsBox.replaceChildren();
@@ -68,6 +70,9 @@ export function mountGeneratePanel(
       });
       controls.set(spec.key, control);
       fieldsBox.append(el('div', { class: 'field-row' }, control, dice));
+      const kept = previous.get(spec.key);
+      const allowed = spec.kind !== 'select' || spec.options?.some((o) => o.value === kept);
+      if (kept && allowed) void control.updateComplete.then(() => (control.value = kept));
     }
   }
 

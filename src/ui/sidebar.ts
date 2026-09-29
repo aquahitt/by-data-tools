@@ -22,11 +22,15 @@ export function mountSidebar(
         return el(
           'li',
           {},
-          el('span', { class: 'nav-item soon', 'aria-disabled': 'true' }, tool.title, el('span', { class: 'badge' }, 'скоро')),
+          el('span', { class: 'nav-item soon', role: 'link', 'aria-disabled': 'true' }, tool.title, el('span', { class: 'badge' }, 'скоро')),
         );
       }
       const link = el('a', { class: 'nav-item', href: `#/${tool.id}` }, tool.title);
-      link.addEventListener('click', close);
+      link.addEventListener('click', (e) => {
+        // Re-clicking the open section would push a history entry that "Back" then silently undoes.
+        if (link.getAttribute('aria-current') === 'page') e.preventDefault();
+        close();
+      });
       links.set(tool.id, link);
       return el('li', {}, link);
     });
