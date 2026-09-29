@@ -96,23 +96,30 @@ const fields: FieldSpec[] = [
   },
 ];
 
+// A foreign IBAN: its own country code, check digits and a BBAN of that country's length (ISO 13616: up to 30).
+const FOREIGN = /^(?!BY)[A-Z]{2}\d{2}[A-Z0-9]{1,30}$/;
+
 function validate(input: string): ValidationResult {
   const n = normalizeIban(input);
   const errors: Issue[] = [...n.errors];
   const warnings: Issue[] = [...n.warnings];
+  if (errors.length === 0 && FOREIGN.test(n.value)) {
+    const foreign = n.value.slice(0, 2);
+    // The Belarusian length, layout and bank directory do not apply to another country's IBAN: say only that.
+    errors.push({ code: 'COUNTRY', message: `Код страны «${foreign}» — IBAN не Беларуси, ожидается «BY»`, position: 1 });
+    return { valid: false, normalized: n.value, errors, warnings };
+  }
   if (errors.length === 0) errors.push(...structureIssues(n.value, IBAN_TEMPLATE));
   if (errors.length === 0) {
+    // Fits the template and is not FOREIGN, so the country is BY.
     const v = n.value;
-    if (v.slice(0, 2) !== COUNTRY) {
-      errors.push({ code: 'COUNTRY', message: `Код страны должен быть «BY», получено «${v.slice(0, 2)}»`, position: 1 });
-    } else if (v.slice(2, 4) !== ibanCheckDigits(COUNTRY, v.slice(4))) {
+    const expected = ibanCheckDigits(COUNTRY, v.slice(4));
+    if (v.slice(2, 4) !== expected) {
       // Compare with the computed digits, not "mod 97 = 1": that also admits 00, 01 and 99 (ISO 13616: 02..98).
-      const expected = ibanCheckDigits(COUNTRY, v.slice(4));
       errors.push({ code: 'CHECK_DIGITS', message: `Контрольные цифры ${v.slice(2, 4)}, должны быть ${expected}`, position: 3 });
     }
     const bank = v.slice(4, 8);
-    // The bank directory is Belarusian; for a foreign IBAN the country error says enough.
-    if (v.slice(0, 2) === COUNTRY && !Object.hasOwn(BANKS, bank)) {
+    if (!Object.hasOwn(BANKS, bank)) {
       warnings.push({
         code: 'UNKNOWN_BANK',
         message: `Код банка «${bank}» не найден в справочнике НБРБ (на ${DIRECTORY_DATE})`,
@@ -125,23 +132,27 @@ function validate(input: string): ValidationResult {
 
 function parse(input: string): ParsedField[] | null {
   const n = normalizeIban(input);
-  if (n.errors.length > 0 || structureIssues(n.value, IBAN_TEMPLATE).length > 0) return null;
+  if (n.errors.length > 0) return null;
   const v = n.value;
   const country = v.slice(0, 2);
-  const expected = ibanCheckDigits(country, v.slice(4));
-  const bank = v.slice(4, 8);
-  const balance = v.slice(8, 12);
-  const checkDigits = {
+  const checkDigits = (expected: string) => ({
     label: 'Контрольные цифры',
     value: v.slice(2, 4) === expected ? `${expected} — верные` : `${v.slice(2, 4)} — должны быть ${expected}`,
-  };
-  if (country !== COUNTRY) {
-    // Positions 5..28 of a foreign IBAN follow that country's layout, not the Belarusian one.
-    return [{ label: 'Страна', value: `${country} — не Беларусь` }, checkDigits, { label: 'Запись группами', value: grouped(v) }];
+  });
+  if (FOREIGN.test(v)) {
+    // Positions 5.. of a foreign IBAN follow that country's layout and length, not the Belarusian one.
+    return [
+      { label: 'Страна', value: `${country} — не Беларусь` },
+      checkDigits(ibanCheckDigits(country, v.slice(4))),
+      { label: 'Запись группами', value: grouped(v) },
+    ];
   }
+  if (structureIssues(v, IBAN_TEMPLATE).length > 0 || country !== COUNTRY) return null;
+  const bank = v.slice(4, 8);
+  const balance = v.slice(8, 12);
   return [
     { label: 'Страна', value: 'BY — Республика Беларусь' },
-    checkDigits,
+    checkDigits(ibanCheckDigits(COUNTRY, v.slice(4))),
     { label: 'Банк', value: `${bank} — ${BANKS[bank] ?? 'нет в справочнике'}` },
     { label: 'Балансовый счёт', value: `${balance} — ${BALANCE_ACCOUNTS[balance] ?? 'нет в списке распространённых'}` },
     { label: 'Номер счёта в банке', value: v.slice(12) },

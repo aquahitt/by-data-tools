@@ -126,6 +126,28 @@ describe('ibanBy review follow-ups', () => {
     ]);
   });
 
+  it('names a foreign IBAN of another length as not Belarusian, without a length error', () => {
+    const r = ibanBy.validate('DE89 3704 0044 0532 0130 00');
+    expect(r.errors).toEqual([
+      { code: 'COUNTRY', message: 'Код страны «DE» — IBAN не Беларуси, ожидается «BY»', position: 1 },
+    ]);
+    expect(codes('PL61109010140000071219812874')).toEqual(['COUNTRY']);
+    expect(codes('GB29NWBK60161331926819')).toEqual(['COUNTRY']);
+  });
+
+  it('parses a foreign IBAN of any length', () => {
+    expect(ibanBy.parse('DE89370400440532013000')).toEqual([
+      { label: 'Страна', value: 'DE — не Беларусь' },
+      { label: 'Контрольные цифры', value: '89 — верные' },
+      { label: 'Запись группами', value: 'DE89 3704 0044 0532 0130 00' },
+    ]);
+  });
+
+  it('keeps the length error for text that is not an IBAN at all', () => {
+    expect(codes('ABCDEF')).toEqual(['LENGTH']);
+    expect(ibanBy.parse('ABCDEF')).toBeNull();
+  });
+
   it('adds no bank warning to a foreign IBAN', () => {
     expect(ibanBy.validate('DE30ABCD32000079500190000000').warnings).toEqual([]);
   });

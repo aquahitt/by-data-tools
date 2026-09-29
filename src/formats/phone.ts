@@ -55,12 +55,12 @@ function toNational(input: string): National {
   const errors: Issue[] = [];
   let digits = '';
   let plus = false;
-  // Positions refer to the text as typed, so a message points at the character the user sees.
   // A '+' counts as the leading one while nothing but separators precedes it: "(+375 29)", bidi marks.
-  [...input].forEach((ch, i) => {
+  // Positions count in the text without separators, as in every other section (see core/normalize.ts).
+  [...input.replace(SEPARATORS, '')].forEach((ch, i) => {
     if (/\d/.test(ch)) digits += ch;
     else if (ch === '+' && !plus && digits === '') plus = true;
-    else if (!SEPARATOR.test(ch)) errors.push({ code: 'INVALID_CHAR', message: describeChar(ch), position: i + 1 });
+    else errors.push({ code: 'INVALID_CHAR', message: describeChar(ch), position: i + 1 });
   });
   if (errors.length > 0) return { national: null, errors };
   if (plus && !digits.startsWith('375')) {

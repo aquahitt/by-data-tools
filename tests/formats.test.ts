@@ -79,4 +79,11 @@ describe('suggestOtherFormat by shape', () => {
   it('does not point anywhere when the current format already fits the shape', () => {
     expect(suggestOtherFormat('200988542', 'organization', UNP_FORMATS)).toBeNull();
   });
+
+  it('does not point to a format that rejects the number for more than its check digit', () => {
+    // Organization shape, but region 9 does not exist.
+    expect(suggestOtherFormat('900000000', 'individual', UNP_FORMATS)).toBeNull();
+    // Organization shape with a known region and a wrong check digit: a typo, worth the hint.
+    expect(suggestOtherFormat('200988542', 'individual', UNP_FORMATS)?.id).toBe('organization');
+  });
 });

@@ -7,6 +7,21 @@ export interface Sidebar {
 
 const MODAL = '(max-width: 839px)';
 
+type Controlling = HTMLElement & { ariaControlsElements?: Element[] | null };
+
+/**
+ * aria-controls="sidebar" on the ☰ host names the drawer, but the focusable <button> sits in the host's shadow
+ * root, where an IDREF to the page cannot resolve (and md-icon-button does not forward aria-controls to it).
+ * An element reference can point out of a shadow root, so the inner button gets the drawer itself.
+ */
+function linkControls(host: HTMLElement, target: HTMLElement): void {
+  void customElements.whenDefined(host.localName).then(async () => {
+    await (host as HTMLElement & { updateComplete?: Promise<unknown> }).updateComplete;
+    const button = host.shadowRoot?.querySelector<Controlling>('button');
+    if (button && 'ariaControlsElements' in button) button.ariaControlsElements = [target];
+  });
+}
+
 // Material 3 navigation drawer: persistent on wide screens, modal behind ☰ on narrow ones.
 export function mountSidebar(
   nav: HTMLElement,
@@ -27,6 +42,8 @@ export function mountSidebar(
       }
       const link = el('a', { class: 'nav-item', href: `#/${tool.id}` }, tool.title);
       link.addEventListener('click', (e) => {
+        // Ctrl/Cmd/Shift/Alt-click or a middle click opens a new tab or window: leave it to the browser.
+        if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
         // Re-clicking the open section would push a history entry that "Back" then silently undoes.
         if (link.getAttribute('aria-current') === 'page') e.preventDefault();
         close();
@@ -61,6 +78,7 @@ export function mountSidebar(
     if (modal.matches) menuButton.focus();
   }
 
+  linkControls(menuButton, nav);
   menuButton.addEventListener('click', open);
   scrim.addEventListener('click', close);
   document.addEventListener('keydown', (e) => {

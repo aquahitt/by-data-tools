@@ -30,7 +30,7 @@ describe('phoneMobile.validate', () => {
 
   it('rejects letters with their position', () => {
     expect(phoneMobile.validate('+375 29 123-45-6X').errors).toEqual([
-      { code: 'INVALID_CHAR', message: 'Недопустимый символ «X»', position: 17 },
+      { code: 'INVALID_CHAR', message: 'Недопустимый символ «X»', position: 13 },
     ]);
   });
 });
@@ -175,17 +175,17 @@ describe('phone input follow-ups', () => {
     ]);
   });
 
-  it('reports every bad character at its position in the typed text', () => {
+  it('reports every bad character at its position in the number without separators', () => {
     expect(phoneMobile.validate('+375 29 1x3 4y 67').errors).toEqual([
-      { code: 'INVALID_CHAR', message: 'Недопустимый символ «x»', position: 10 },
-      { code: 'INVALID_CHAR', message: 'Недопустимый символ «y»', position: 14 },
+      { code: 'INVALID_CHAR', message: 'Недопустимый символ «x»', position: 8 },
+      { code: 'INVALID_CHAR', message: 'Недопустимый символ «y»', position: 11 },
     ]);
   });
 
   it('ignores zero-width separators and names other invisible characters by code point', () => {
     expect(phoneMobile.validate('+375 29 123\u200b45\u00ad67').valid).toBe(true);
     expect(phoneMobile.validate('+375 29 123\u206345 67').errors).toEqual([
-      { code: 'INVALID_CHAR', message: 'Недопустимый невидимый символ U+2063', position: 12 },
+      { code: 'INVALID_CHAR', message: 'Недопустимый невидимый символ U+2063', position: 10 },
     ]);
   });
 
@@ -218,10 +218,11 @@ describe('phone paste follow-ups', () => {
     expect(phoneMobile.validate(input)).toEqual({ valid: true, normalized: '+375291234567', errors: [], warnings: [] });
   });
 
-  it('counts positions in the text as typed, leading spaces included', () => {
+  it('counts positions without separators, like the other sections', () => {
     expect(phoneMobile.validate('  +375 29 12x 45 67').errors).toEqual([
-      { code: 'INVALID_CHAR', message: 'Недопустимый символ «x»', position: 13 },
+      { code: 'INVALID_CHAR', message: 'Недопустимый символ «x»', position: 9 },
     ]);
+    expect(phoneMobile.validate('+375 (29) 12x-45-67').errors).toEqual(phoneMobile.validate('+3752912x4567').errors);
   });
 });
 

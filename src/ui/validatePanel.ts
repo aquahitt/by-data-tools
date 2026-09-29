@@ -67,7 +67,10 @@ export function mountValidatePanel(root: HTMLElement, options: ValidatePanelOpti
     if (other) {
       const switchButton = el('md-text-button', {}, 'Переключить');
       switchButton.addEventListener('click', () => onSwitchFormat(other.id));
-      result.append(el('p', { class: 'hint' }, `Похоже на формат «${other.title}».`, switchButton));
+      const text = other.validate(input).valid
+        ? `Похоже на формат «${other.title}».`
+        : `По виду это формат «${other.title}», но и там не сходится контрольная цифра — возможно, опечатка.`;
+      result.append(el('p', { class: 'hint' }, text, switchButton));
     }
     const parsed = format.parse(input);
     if (parsed) {

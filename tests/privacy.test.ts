@@ -19,7 +19,19 @@ const PERSISTENCE = [
   /document\.cookie/,
   /indexedDB/,
   /location\.(hash|href|search)\s*=(?!=)/,
+  /\blocation\s*=(?!=)/,
   /location\.(assign|replace)\s*\(/,
+];
+
+// Every way to give an element a link target or to open one, other than the menu's `href:` attribute.
+const LINK_TARGETS = [
+  /\.href\s*=(?!=)/, // link.href = …, location.href = …
+  /\[\s*['"`]href['"`]\s*\]\s*=(?!=)/, // link['href'] = …
+  /setAttribute(NS)?\s*\(\s*(null\s*,\s*)?['"`](href|xlink:href|src|action|formaction)['"`]/i,
+  /\.(src|action|formAction)\s*=(?!=)/,
+  /[{,]\s*href\s*[,}]/, // el('a', { href })
+  /\b(window|globalThis|self|top|parent|opener)\s*(\.\s*open|\[\s*['"`]open['"`]\s*\])\s*\(/,
+  /\bopen\s*\(\s*['"`/]/, // a destructured open('…')
 ];
 
 // The spec promises the number never leaves the browser and is never persisted.
@@ -53,6 +65,29 @@ describe('privacy', () => {
       if (name !== join('ui', 'sidebar.ts')) expect(/['"]?href['"]?\s*:/.test(code), `${name} sets an href`).toBe(false);
     }
     expect(readFileSync(join(SRC, 'ui', 'sidebar.ts'), 'utf8')).toContain('href: `#/${tool.id}`');
+  });
+
+  it('no other code sets a link target or opens a window', () => {
+    for (const file of sources(SRC)) {
+      const code = readFileSync(file, 'utf8');
+      for (const re of LINK_TARGETS) expect(re.test(code), `${relative(SRC, file)} uses ${re}`).toBe(false);
+    }
+  });
+
+  it.each([
+    ["link.href = '#/x?n=' + value", LINK_TARGETS],
+    ["link['href'] = url", LINK_TARGETS],
+    ["a.setAttribute('href', url)", LINK_TARGETS],
+    ['a.setAttributeNS(null, "href", url)', LINK_TARGETS],
+    ['img.src = url', LINK_TARGETS],
+    ["el('a', { href }, 'x')", LINK_TARGETS],
+    ['window.open(url)', LINK_TARGETS],
+    ["window['open'](url)", LINK_TARGETS],
+    ['globalThis.open(url, "_blank")', LINK_TARGETS],
+    ["window.location = '#/' + value", PERSISTENCE],
+    ["location = url", PERSISTENCE],
+  ])('the checks catch %s', (snippet, patterns) => {
+    expect(patterns.some((re) => re.test(snippet))).toBe(true);
   });
 });
 
