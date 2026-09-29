@@ -1,22 +1,47 @@
 import type { FormatId, FormatModule } from '../core/types';
+import { bic } from './bic';
+import { cadastral } from './cadastral';
+import { card } from './card';
+import { email } from './email';
 import { ibanBy } from './iban';
+import { idCard, residencePermit } from './idDocuments';
+import { imei, imeisv } from './imei';
 import { legacy } from './legacy';
 import { modern } from './modern';
+import { oked } from './oked';
+import { okpo12, okpo8 } from './okpo';
 import { passport1996 } from './passport1996';
 import { phoneLandline, phoneMobile } from './phone';
 import { passportBiometric } from './passportBiometric';
+import { PLATE_FORMATS } from './plate';
+import { postalCode } from './postal';
+import { soato } from './soato';
+import { NAME_FORMATS } from './translitName';
 import { unpIndividual } from './unpIndividual';
 import { unpOrganization } from './unpOrganization';
+import { vin } from './vin';
 
 export const PERSONAL_NUMBER_FORMATS: FormatModule[] = [modern, legacy];
 
-export const PASSPORT_FORMATS: FormatModule[] = [passport1996, passportBiometric];
+export const PASSPORT_FORMATS: FormatModule[] = [passport1996, passportBiometric, idCard, residencePermit];
 
 export const UNP_FORMATS: FormatModule[] = [unpOrganization, unpIndividual];
 
 export const IBAN_FORMATS: FormatModule[] = [ibanBy];
 
 export const PHONE_FORMATS: FormatModule[] = [phoneMobile, phoneLandline];
+
+export const BIC_FORMATS: FormatModule[] = [bic];
+export const CARD_FORMATS: FormatModule[] = [card];
+export const OKPO_FORMATS: FormatModule[] = [okpo8, okpo12];
+export const OKED_FORMATS: FormatModule[] = [oked];
+export { NAME_FORMATS, PLATE_FORMATS };
+export const VIN_FORMATS: FormatModule[] = [vin];
+export const POSTAL_FORMATS: FormatModule[] = [postalCode];
+export const SOATO_FORMATS: FormatModule[] = [soato];
+export const CADASTRAL_FORMATS: FormatModule[] = [cadastral];
+export const EMAIL_FORMATS: FormatModule[] = [email];
+export const IMEI_FORMATS: FormatModule[] = [imei, imeisv];
 
 // Errors that mean "this is not the shape of the format at all", as opposed to a wrong code or check digit.
 const SHAPE_ERRORS = new Set(['EMPTY', 'LENGTH', 'STRUCTURE', 'INVALID_CHAR', 'FORMAT']);

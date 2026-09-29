@@ -11,14 +11,17 @@ export interface ValidatePanel {
 export interface ValidatePanelOptions {
   formats: FormatModule[];
   inputLabel: string;
+  inputHint?: string;
+  status?: [string, string, string];
   onSwitchFormat: (id: FormatId) => void;
 }
 
 export function mountValidatePanel(root: HTMLElement, options: ValidatePanelOptions): ValidatePanel {
   const { formats, inputLabel, onSwitchFormat } = options;
+  const [okText, warnText, badText] = options.status ?? ['Номер валиден', 'Номер валиден, есть предупреждения', 'Номер невалиден'];
   const field = el('md-outlined-text-field', {
     label: inputLabel,
-    'supporting-text': 'Пробелы, дефисы и регистр не важны',
+    'supporting-text': options.inputHint ?? 'Пробелы, дефисы и регистр не важны',
     autocomplete: 'off',
     spellcheck: 'false',
   });
@@ -51,9 +54,9 @@ export function mountValidatePanel(root: HTMLElement, options: ValidatePanelOpti
   }
 
   function statusLine(r: ValidationResult): HTMLElement {
-    if (!r.valid) return el('p', { class: 'status error' }, mdIcon('error'), 'Номер невалиден');
-    if (r.warnings.length) return el('p', { class: 'status warning' }, mdIcon('warning'), 'Номер валиден, есть предупреждения');
-    return el('p', { class: 'status ok' }, mdIcon('check'), 'Номер валиден');
+    if (!r.valid) return el('p', { class: 'status error' }, mdIcon('error'), badText);
+    if (r.warnings.length) return el('p', { class: 'status warning' }, mdIcon('warning'), warnText);
+    return el('p', { class: 'status ok' }, mdIcon('check'), okText);
   }
 
   function render(input: string): void {

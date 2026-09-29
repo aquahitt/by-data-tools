@@ -14,6 +14,7 @@ export interface GeneratePanel {
 export function mountGeneratePanel(
   root: HTMLElement,
   onCheck: (value: string) => void,
+  help = 'Пустые поля заполняются случайно. Контрольная цифра считается автоматически.',
   rng: Rng = cryptoRng,
 ): GeneratePanel {
   const fieldsBox = el('div', { class: 'fields' });
@@ -21,7 +22,7 @@ export function mountGeneratePanel(
   const randomButton = el('md-outlined-button', {}, 'Всё случайно');
   const output = el('div', { class: 'output', 'aria-live': 'polite' });
   root.append(
-    el('p', { class: 'help' }, 'Пустые поля заполняются случайно. Контрольная цифра считается автоматически.'),
+    el('p', { class: 'help' }, help),
     fieldsBox,
     el('div', { class: 'actions' }, generateButton, randomButton),
     output,

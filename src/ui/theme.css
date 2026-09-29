@@ -89,9 +89,10 @@ h2 { margin: 0 0 16px; font-size: 1.125rem; font-weight: 500; }
 .card { margin-block: 16px; padding: 24px; border-radius: 16px; background: var(--md-sys-color-surface-container-low); }
 .notice { margin: 0; padding: 12px 16px; border-radius: 12px; background: var(--app-warning-container); }
 
-.segmented { display: inline-flex; overflow: hidden; border: 1px solid var(--md-sys-color-outline); border-radius: 20px; }
+/* Up to six formats: scrolls sideways on narrow screens instead of breaking the layout. */
+.segmented { display: inline-flex; max-width: 100%; overflow-x: auto; border: 1px solid var(--md-sys-color-outline); border-radius: 20px; }
 .segmented button {
-  min-height: 40px; padding: 0 16px; border: 0; cursor: pointer;
+  flex: none; min-height: 40px; padding: 0 16px; border: 0; cursor: pointer; white-space: nowrap;
   font: 500 0.875rem/1 var(--md-ref-typeface-plain);
   background: transparent; color: var(--md-sys-color-on-surface);
 }
@@ -178,3 +179,12 @@ a.nav-item:focus-visible { outline: 2px solid var(--md-sys-color-primary); outli
   .menu-button { display: inline-flex; margin-inline-start: -8px; }
   .top { padding-block: 16px 8px; }
 }
+
+/* Persona table: wide, scrolls sideways inside the card. */
+.persona-output { margin-top: 16px; }
+.table-scroll { overflow-x: auto; margin-top: 12px; }
+.table-scroll:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 2px; }
+.persona-table { border-collapse: collapse; font-size: 0.8125rem; white-space: nowrap; }
+.persona-table th, .persona-table td { padding: 6px 12px 6px 0; text-align: left; border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+.persona-table th { font-weight: 500; color: var(--md-sys-color-on-surface-variant); }
+.persona-table td { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }

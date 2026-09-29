@@ -10,7 +10,7 @@ import type { FieldSpec, FormatModule, GenerateResult, Issue, ParsedField, Rng, 
 // four-digit balance account (chart of accounts, NBRB resolution No. 506), sixteen characters set by the bank.
 
 const COUNTRY = 'BY';
-const DIRECTORY_DATE = '28.09.2026';
+export const DIRECTORY_DATE = '28.09.2026';
 
 // Banks of the NBRB BIC directory (nbrb.by/payment/bic, bic-rb.xlsx) with status "действующий", snapshot of
 // DIRECTORY_DATE; exchange, non-bank credit institutions and foreign banks left out. Update here only.
@@ -38,6 +38,33 @@ export const BANKS: Record<string, string> = {
   AKBB: 'ОАО «АСБ Беларусбанк»',
   ZEPT: 'ЗАО «Цептер Банк»',
   BAPB: 'ОАО «Белагропромбанк»',
+};
+
+// Full BIC of each bank of BANKS, same directory and date (ISO 9362: bank, country, location, optional branch).
+export const BICS: Record<string, string> = {
+  NBRB: 'NBRBBY2X',
+  SLAN: 'SLANBY22',
+  REDJ: 'REDJBY22',
+  MTBK: 'MTBKBY22',
+  UNBS: 'UNBSBY2X',
+  TECN: 'TECNBY22',
+  BRRB: 'BRRBBY2X',
+  BELB: 'BELBBY2X',
+  ALFA: 'ALFABY2X',
+  MMBN: 'MMBNBY22',
+  RSHN: 'RSHNBY2X',
+  BBTK: 'BBTKBY2X',
+  BPSB: 'BPSBBY2X',
+  AEBK: 'AEBKBY2X',
+  IRJS: 'IRJSBY22',
+  BLBB: 'BLBBBY2X',
+  OLMP: 'OLMPBY2X',
+  PJCB: 'PJCBBY2X',
+  BLNB: 'BLNBBY2X',
+  POIS: 'POISBY2X',
+  AKBB: 'AKBBBY2X',
+  ZEPT: 'ZEPTBY2X',
+  BAPB: 'BAPBBY2X',
 };
 
 // Common client accounts of the chart of accounts (NBRB resolution No. 506, groups 301, 303, 340, 341).

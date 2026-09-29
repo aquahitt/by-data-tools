@@ -1,4 +1,4 @@
-import type { Category, Tool } from '../tools';
+import { type Category, isAvailable, type Tool } from '../tools';
 import { el } from './dom';
 
 export interface Sidebar {
@@ -33,7 +33,7 @@ export function mountSidebar(
   const links = new Map<string, HTMLAnchorElement>();
   for (const { category, tools } of groups) {
     const items = tools.map((tool) => {
-      if (tool.formats.length === 0) {
+      if (!isAvailable(tool)) {
         return el(
           'li',
           {},

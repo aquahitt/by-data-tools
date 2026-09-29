@@ -32,6 +32,8 @@ export function mountFormatSwitch(
       const on = b.dataset.id === id;
       b.setAttribute('aria-checked', String(on));
       b.tabIndex = on ? 0 : -1;
+      // With many formats the switch scrolls sideways on phones: keep the chosen one in view.
+      if (on && root.scrollWidth > root.clientWidth) root.scrollLeft = b.offsetLeft - (root.clientWidth - b.offsetWidth) / 2;
     }
   }
 

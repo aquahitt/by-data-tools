@@ -1,4 +1,4 @@
-import type { Tool } from '../tools';
+import { isAvailable, type Tool } from '../tools';
 
 // Pure functions only: reading and building routes. Writing the URL belongs to formatState.ts.
 
@@ -22,7 +22,7 @@ export function buildHash(route: Route): string {
 /** An available section named by the hash, else the default one; honours first-version `?format=` links. */
 export function resolveRoute(hash: string, search: string, tools: Tool[], defaultToolId: string): Route {
   const parsed = parseHash(hash);
-  if (parsed && tools.some((t) => t.id === parsed.toolId && t.formats.length > 0)) return parsed;
+  if (parsed && tools.some((t) => t.id === parsed.toolId && isAvailable(t))) return parsed;
   if (!parsed) {
     const firstVersionFormat = new URLSearchParams(search).get('format');
     if (firstVersionFormat) return { toolId: defaultToolId, format: firstVersionFormat };

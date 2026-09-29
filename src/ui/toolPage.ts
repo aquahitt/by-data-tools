@@ -37,9 +37,11 @@ export function mountToolPage(
   const validatePanel = mountValidatePanel(validateBody, {
     formats: tool.formats,
     inputLabel: tool.inputLabel,
+    inputHint: tool.texts?.inputHint,
+    status: tool.texts?.status,
     onSwitchFormat: onFormatChange,
   });
-  const generatePanel = mountGeneratePanel(generateBody, (value) => validatePanel.check(value));
+  const generatePanel = mountGeneratePanel(generateBody, (value) => validatePanel.check(value), tool.texts?.generateHelp);
 
   function setFormat(format: FormatModule): void {
     formatSwitch?.set(format.id);

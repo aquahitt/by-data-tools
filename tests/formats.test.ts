@@ -8,8 +8,10 @@ import {
   UNP_FORMATS,
 } from '../src/formats';
 import { mulberry32 } from '../src/core/random';
+import { TOOLS } from '../src/tools';
 
-const ALL = [...PERSONAL_NUMBER_FORMATS, ...PASSPORT_FORMATS, ...UNP_FORMATS, ...IBAN_FORMATS, ...PHONE_FORMATS];
+// Every format of every section.
+const ALL = TOOLS.flatMap((t) => t.formats.map((f) => ({ ...f, id: `${t.id}/${f.id}` })));
 
 describe('generated numbers', () => {
   for (const format of ALL) {
