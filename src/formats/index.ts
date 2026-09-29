@@ -1,11 +1,16 @@
 import type { FormatId, FormatModule } from '../core/types';
+import { amount } from './amount';
 import { bic } from './bic';
 import { cadastral } from './cadastral';
 import { card } from './card';
+import { customsDeclaration } from './customsDeclaration';
+import { EAN_FORMATS } from './ean';
 import { email } from './email';
 import { ibanBy } from './iban';
 import { idCard, residencePermit } from './idDocuments';
 import { imei, imeisv } from './imei';
+import { inventoryNumber } from './inventory';
+import { oldAccount, oldBankCode } from './legacyBank';
 import { legacy } from './legacy';
 import { modern } from './modern';
 import { oked } from './oked';
@@ -27,11 +32,11 @@ export const PASSPORT_FORMATS: FormatModule[] = [passport1996, passportBiometric
 
 export const UNP_FORMATS: FormatModule[] = [unpOrganization, unpIndividual];
 
-export const IBAN_FORMATS: FormatModule[] = [ibanBy];
+export const IBAN_FORMATS: FormatModule[] = [ibanBy, oldAccount];
 
 export const PHONE_FORMATS: FormatModule[] = [phoneMobile, phoneLandline];
 
-export const BIC_FORMATS: FormatModule[] = [bic];
+export const BIC_FORMATS: FormatModule[] = [bic, oldBankCode];
 export const CARD_FORMATS: FormatModule[] = [card];
 export const OKPO_FORMATS: FormatModule[] = [okpo8, okpo12];
 export const OKED_FORMATS: FormatModule[] = [oked];
@@ -42,6 +47,10 @@ export const SOATO_FORMATS: FormatModule[] = [soato];
 export const CADASTRAL_FORMATS: FormatModule[] = [cadastral];
 export const EMAIL_FORMATS: FormatModule[] = [email];
 export const IMEI_FORMATS: FormatModule[] = [imei, imeisv];
+export const AMOUNT_FORMATS: FormatModule[] = [amount];
+export { EAN_FORMATS };
+export const CUSTOMS_FORMATS: FormatModule[] = [customsDeclaration];
+export const INVENTORY_FORMATS: FormatModule[] = [inventoryNumber];
 
 // Errors that mean "this is not the shape of the format at all", as opposed to a wrong code or check digit.
 const SHAPE_ERRORS = new Set(['EMPTY', 'LENGTH', 'STRUCTURE', 'INVALID_CHAR', 'FORMAT']);

@@ -2,8 +2,7 @@ import type { MdOutlinedSelect } from '@material/web/select/outlined-select.js';
 import type { MdOutlinedTextField } from '@material/web/textfield/outlined-text-field.js';
 import { cryptoRng } from '../core/random';
 import type { Rng } from '../core/types';
-import type { Gender } from '../formats/names';
-import { generatePersona, PERSONA_FIELDS, type Persona, toCsv, toJson } from '../formats/persona';
+import { type DataRecord, type RecordSet, toCsv, toJson } from '../formats/records';
 import { el } from './dom';
 import { mdIcon } from './icons';
 
@@ -16,12 +15,9 @@ function select(label: string, options: [string, string][]): MdOutlinedSelect {
   return s;
 }
 
-/** Generator-only section: a set of consistent test people, shown as a table and copied as JSON or CSV. */
-export function mountPersonaPage(root: HTMLElement, rng: Rng = cryptoRng): void {
-  const gender = select('Пол', [
-    ['M', 'Мужской'],
-    ['F', 'Женский'],
-  ]);
+/** Generator-only section: a set of consistent records, shown as a table and copied as JSON or CSV. */
+export function mountRecordsPage(root: HTMLElement, set: RecordSet, id: string, rng: Rng = cryptoRng): void {
+  const filters = set.filters.map((f) => ({ key: f.key, control: select(f.label, f.options) }));
   const count: MdOutlinedTextField = el('md-outlined-text-field', {
     label: `Количество (1–${MAX})`,
     value: '1',
@@ -34,18 +30,18 @@ export function mountPersonaPage(root: HTMLElement, rng: Rng = cryptoRng): void 
   const output = el('div', { class: 'persona-output', 'aria-live': 'polite' });
 
   root.append(
-    el('p', { class: 'notice' }, 'Значения согласованы между собой: ФИО по-русски и по-белорусски, латиница — из белорусской формы, как в документах; пол и дата рождения — с идентификационным номером, область — с серией паспорта и индексом. Email — на резервном домене example.com, номера карт банками не выпущены. Только для тестов.'),
+    el('p', { class: 'notice' }, set.notice),
     el(
       'section',
-      { class: 'card', 'aria-labelledby': 'persona-generate' },
-      el('h2', { id: 'persona-generate' }, 'Генерация'),
-      el('div', { class: 'fields' }, gender, count),
+      { class: 'card', 'aria-labelledby': `${id}-generate` },
+      el('h2', { id: `${id}-generate` }, 'Генерация'),
+      el('div', { class: 'fields' }, ...filters.map((f) => f.control), count),
       el('div', { class: 'actions' }, button),
       output,
     ),
   );
 
-  let personas: Persona[] = [];
+  let rows: DataRecord[] = [];
 
   function copyButton(label: string, text: () => string): HTMLElement {
     const b = el('md-outlined-button', {}, label);
@@ -55,11 +51,20 @@ export function mountPersonaPage(root: HTMLElement, rng: Rng = cryptoRng): void 
   }
 
   function render(): void {
-    const head = el('tr', {}, ...PERSONA_FIELDS.map((f) => el('th', { scope: 'col' }, f.label)));
-    const rows = personas.map((p) => el('tr', {}, ...PERSONA_FIELDS.map((f) => el('td', {}, p[f.key] ?? ''))));
+    const head = el('tr', {}, ...set.fields.map((f) => el('th', { scope: 'col' }, f.label)));
+    const body = rows.map((r) => el('tr', {}, ...set.fields.map((f) => el('td', {}, r[f.key] ?? ''))));
     output.replaceChildren(
-      el('div', { class: 'actions' }, copyButton('Копировать JSON', () => toJson(personas)), copyButton('Копировать CSV', () => toCsv(personas))),
-      el('div', { class: 'table-scroll', tabindex: '0', role: 'region', 'aria-label': 'Сгенерированные персоны' }, el('table', { class: 'persona-table' }, el('thead', {}, head), el('tbody', {}, ...rows))),
+      el(
+        'div',
+        { class: 'actions' },
+        copyButton('Копировать JSON', () => toJson(rows)),
+        copyButton('Копировать CSV', () => toCsv(set.fields, rows)),
+      ),
+      el(
+        'div',
+        { class: 'table-scroll', tabindex: '0', role: 'region', 'aria-label': 'Сгенерированные записи' },
+        el('table', { class: 'persona-table' }, el('thead', {}, head), el('tbody', {}, ...body)),
+      ),
     );
   }
 
@@ -72,8 +77,8 @@ export function mountPersonaPage(root: HTMLElement, rng: Rng = cryptoRng): void 
     }
     count.error = false;
     count.errorText = '';
-    const options = { gender: (gender.value || undefined) as Gender | undefined };
-    personas = Array.from({ length: n }, () => generatePersona(rng, options));
+    const chosen = Object.fromEntries(filters.map((f) => [f.key, f.control.value]));
+    rows = Array.from({ length: n }, () => set.generate(rng, chosen));
     render();
   }
 

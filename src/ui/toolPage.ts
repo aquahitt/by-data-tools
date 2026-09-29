@@ -1,6 +1,7 @@
 import type { FormatId, FormatModule } from '../core/types';
 import type { Tool } from '../tools';
 import { el } from './dom';
+import { mountBulkPanel } from './bulkPanel';
 import { mountFormatSwitch } from './formatSwitch';
 import { mountGeneratePanel } from './generatePanel';
 import { mountValidatePanel } from './validatePanel';
@@ -25,11 +26,13 @@ export function mountToolPage(
   const notice = el('p', { class: 'notice' });
   const validateBody = el('div');
   const generateBody = el('div');
+  const bulkBody = el('div');
   root.append(
     header,
     notice,
     card(`${tool.id}-validate`, 'Проверка и разбор', validateBody),
     card(`${tool.id}-generate`, 'Генерация', generateBody),
+    card(`${tool.id}-bulk`, 'Проверка списком', bulkBody),
   );
 
   const formatSwitch = tool.formats.length > 1 ? mountFormatSwitch(switchBox, tool.formats, initial.id, onFormatChange) : null;
@@ -41,6 +44,7 @@ export function mountToolPage(
     status: tool.texts?.status,
     onSwitchFormat: onFormatChange,
   });
+  const bulkPanel = mountBulkPanel(bulkBody);
   const generatePanel = mountGeneratePanel(generateBody, (value) => validatePanel.check(value), tool.texts?.generateHelp);
 
   function setFormat(format: FormatModule): void {
@@ -49,6 +53,7 @@ export function mountToolPage(
     notice.hidden = !format.notice;
     validatePanel.setFormat(format);
     generatePanel.setFormat(format);
+    bulkPanel.setFormat(format);
   }
 
   setFormat(initial);

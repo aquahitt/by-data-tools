@@ -7,7 +7,8 @@ import { ibanBy } from '../src/formats/iban';
 import { idCard, residencePermit } from '../src/formats/idDocuments';
 import { legacy } from '../src/formats/legacy';
 import { passport1996 } from '../src/formats/passport1996';
-import { generatePersona, PERSONA_FIELDS, toCsv, toJson } from '../src/formats/persona';
+import { generatePersona, PERSONA_FIELDS } from '../src/formats/persona';
+import { toCsv, toJson } from '../src/formats/records';
 import { phoneMobile } from '../src/formats/phone';
 import { postalCode } from '../src/formats/postal';
 import { nameFormat } from '../src/formats/translitName';
@@ -187,6 +188,7 @@ describe('persona', () => {
       expect(rows['Регион']).toContain(p.region);
       expect(passport1996.parse(p.passport)![0].value).toContain(p.region);
       expect(postalCode.parse(p.postalCode)![0].value).toContain(p.region);
+      expect(p.address.startsWith(`${p.postalCode}, `)).toBe(true);
       expect(p.email).toMatch(/@example\.com$/);
     }
   });
@@ -204,7 +206,7 @@ describe('persona', () => {
   it('exports JSON and semicolon CSV with a header row', () => {
     const two = people.slice(0, 2);
     expect(JSON.parse(toJson(two))).toEqual(two);
-    const lines = toCsv(two).split('\r\n');
+    const lines = toCsv(PERSONA_FIELDS, two).split('\r\n');
     expect(lines).toHaveLength(3);
     expect(lines[0].split(';')[0]).toBe('"Фамилия (RU)"');
     expect(lines[1].split(';')[0]).toBe(`"${two[0].lastName}"`);

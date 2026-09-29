@@ -10,10 +10,13 @@ import '@material/web/select/select-option.js';
 import '@material/web/textfield/outlined-text-field.js';
 import './ui/theme.css';
 
+import { ADDRESS_SET } from './formats/address';
+import { ORGANIZATION_SET } from './formats/organization';
+import { PERSONA_SET } from './formats/persona';
 import { DEFAULT_TOOL_ID, findTool, type Tool, TOOLS, toolsByCategory } from './tools';
 import { persistFormat, readStoredFormats, resolveFormatId } from './ui/formatState';
 import { mdIcon } from './ui/icons';
-import { mountPersonaPage } from './ui/personaPage';
+import { mountRecordsPage } from './ui/recordsPage';
 import { resolveRoute } from './ui/router';
 import { mountSidebar } from './ui/sidebar';
 import { mountToolPage, type ToolPage } from './ui/toolPage';
@@ -35,7 +38,7 @@ function show(): void {
     if (current?.toolId === tool.id) return;
     const firstRender = current === null;
     container.replaceChildren();
-    mountPersonaPage(container);
+    mountRecordsPage(container, { persona: PERSONA_SET, organization: ORGANIZATION_SET, address: ADDRESS_SET }[tool.page], tool.id);
     current = { toolId: tool.id, page: null };
     showTitle(tool, firstRender);
     return;

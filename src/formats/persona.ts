@@ -1,6 +1,7 @@
 import { pad, pick, randInt } from '../core/random';
 import { transliterate } from '../core/translit';
 import type { Rng } from '../core/types';
+import { randomAddress } from './address';
 import { card } from './card';
 import { randomMailbox } from './email';
 import { ibanBy } from './iban';
@@ -8,10 +9,11 @@ import { legacy } from './legacy';
 import { type Gender, randomNameForms } from './names';
 import { passport1996 } from './passport1996';
 import { phoneMobile } from './phone';
-import { randomPostalCode } from './postal';
+import type { RecordSet } from './records';
 
-// A consistent test person: name in Russian and Belarusian spelling; sex and birth date match the identification number, the region letter of that number
-// matches the passport series and the postal code. Addresses are on a reserved domain; card numbers are unissued.
+// A consistent test person: name in Russian and Belarusian spelling; sex and birth date match the identification
+// number, the region letter of that number matches the passport series, the address and the postal code.
+// Emails are on a reserved domain; card numbers are unissued.
 
 // Region letter of the pre-2012 identification number → 1996-model passport series and region name.
 const REGION_LINKS: Record<string, { series: string; region: string }> = {
@@ -24,12 +26,7 @@ const REGION_LINKS: Record<string, { series: string; region: string }> = {
   M: { series: 'KB', region: 'Могилёвская область' },
 };
 
-export interface PersonaField {
-  key: string;
-  label: string;
-}
-
-export const PERSONA_FIELDS: PersonaField[] = [
+export const PERSONA_FIELDS = [
   { key: 'lastName', label: 'Фамилия (RU)' },
   { key: 'firstName', label: 'Имя (RU)' },
   { key: 'middleName', label: 'Отчество (RU)' },
@@ -45,6 +42,7 @@ export const PERSONA_FIELDS: PersonaField[] = [
   { key: 'email', label: 'Email' },
   { key: 'region', label: 'Область' },
   { key: 'postalCode', label: 'Почтовый индекс' },
+  { key: 'address', label: 'Адрес' },
   { key: 'iban', label: 'IBAN' },
   { key: 'card', label: 'Банковская карта' },
 ];
@@ -77,6 +75,7 @@ export function generatePersona(rng: Rng, options: { gender?: Gender } = {}): Pe
   const birthDate = randomAdultBirthDate(rng);
   const regionLetter = pick(rng, Object.keys(REGION_LINKS));
   const link = REGION_LINKS[regionLetter];
+  const address = randomAddress(rng, link.region, { flat: true });
   return {
     lastName: ru[0],
     firstName: ru[1],
@@ -92,21 +91,26 @@ export function generatePersona(rng: Rng, options: { gender?: Gender } = {}): Pe
     phone: value(phoneMobile.generate({}, rng)),
     email: `${randomMailbox(rng, latinFirst, latinLast)}@example.com`,
     region: link.region,
-    postalCode: randomPostalCode(rng, link.region),
+    postalCode: address.postalCode,
+    address: address.full,
     iban: value(ibanBy.generate({ balance: '3014' }, rng)),
     card: value(card.generate({ scheme: pick(rng, ['belkart', 'visa', 'mastercard']) }, rng)),
   };
 }
 
-const csvCell = (s: string) => `"${s.replace(/"/g, '""')}"`;
-
-/** Semicolon-separated, as Excel with Russian regional settings expects; header row of Russian labels. */
-export function toCsv(personas: Persona[]): string {
-  const header = PERSONA_FIELDS.map((f) => csvCell(f.label)).join(';');
-  const rows = personas.map((p) => PERSONA_FIELDS.map((f) => csvCell(p[f.key] ?? '')).join(';'));
-  return [header, ...rows].join('\r\n');
-}
-
-export function toJson(personas: Persona[]): string {
-  return JSON.stringify(personas, null, 2);
-}
+export const PERSONA_SET: RecordSet = {
+  notice:
+    'Значения согласованы между собой: ФИО по-русски и по-белорусски, латиница — из белорусской формы, как в документах; пол и дата рождения — с идентификационным номером; область — с серией паспорта, адресом и индексом. Email — на резервном домене example.com, номера карт банками не выпущены. Только для тестов.',
+  filters: [
+    {
+      key: 'gender',
+      label: 'Пол',
+      options: [
+        ['M', 'Мужской'],
+        ['F', 'Женский'],
+      ],
+    },
+  ],
+  fields: PERSONA_FIELDS,
+  generate: (rng, filters) => generatePersona(rng, { gender: (filters.gender || undefined) as Gender | undefined }),
+};

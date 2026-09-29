@@ -1,11 +1,15 @@
 import type { FormatModule } from '../core/types';
 import {
+  AMOUNT_FORMATS,
   BIC_FORMATS,
   CADASTRAL_FORMATS,
   CARD_FORMATS,
+  CUSTOMS_FORMATS,
+  EAN_FORMATS,
   EMAIL_FORMATS,
   IBAN_FORMATS,
   IMEI_FORMATS,
+  INVENTORY_FORMATS,
   NAME_FORMATS,
   OKED_FORMATS,
   OKPO_FORMATS,
@@ -21,7 +25,15 @@ import {
 
 // The navigation menu: categories and sections, in display order. A section without formats or a page is "скоро".
 
-export type CategoryId = 'documents' | 'people' | 'organizations' | 'finance' | 'transport' | 'addresses' | 'contacts';
+export type CategoryId =
+  | 'documents'
+  | 'people'
+  | 'organizations'
+  | 'finance'
+  | 'goods'
+  | 'transport'
+  | 'addresses'
+  | 'contacts';
 
 export interface Category {
   id: CategoryId;
@@ -35,7 +47,7 @@ export interface Tool {
   inputLabel: string;
   formats: FormatModule[];
   /** A section with its own page instead of the validate / generate cards. */
-  page?: 'persona';
+  page?: 'persona' | 'organization' | 'address';
   texts?: ToolTexts;
 }
 
@@ -57,6 +69,7 @@ export const CATEGORIES: Category[] = [
   { id: 'people', title: 'Люди' },
   { id: 'organizations', title: 'Организации' },
   { id: 'finance', title: 'Финансы' },
+  { id: 'goods', title: 'Товары и таможня' },
   { id: 'transport', title: 'Транспорт' },
   { id: 'addresses', title: 'Адреса и недвижимость' },
   { id: 'contacts', title: 'Контакты' },
@@ -86,12 +99,41 @@ export const TOOLS: Tool[] = [
       generateHelp: RANDOM_ONLY,
     },
   },
+  { id: 'organization', title: 'Тестовая организация', category: 'organizations', inputLabel: '', formats: [], page: 'organization' },
   { id: 'unp', title: 'УНП', category: 'organizations', inputLabel: 'УНП', formats: UNP_FORMATS },
   { id: 'okpo', title: 'ОКПО', category: 'organizations', inputLabel: 'Код ОКПО', formats: OKPO_FORMATS, texts: { status: masculine('Код') } },
   { id: 'oked', title: 'ОКЭД', category: 'organizations', inputLabel: 'Код ОКЭД', formats: OKED_FORMATS, texts: CODE },
-  { id: 'iban', title: 'IBAN / номер счёта', category: 'finance', inputLabel: 'IBAN', formats: IBAN_FORMATS },
-  { id: 'bic', title: 'BIC банка', category: 'finance', inputLabel: 'BIC', formats: BIC_FORMATS, texts: CODE },
+  {
+    id: 'iban',
+    title: 'IBAN / номер счёта',
+    category: 'finance',
+    inputLabel: 'IBAN или номер счёта',
+    formats: IBAN_FORMATS,
+    texts: { status: masculine('Счёт') },
+  },
+  { id: 'bic', title: 'BIC / код банка', category: 'finance', inputLabel: 'BIC', formats: BIC_FORMATS, texts: CODE },
   { id: 'card', title: 'Банковская карта', category: 'finance', inputLabel: 'Номер карты', formats: CARD_FORMATS },
+  {
+    id: 'amount',
+    title: 'Сумма прописью',
+    category: 'finance',
+    inputLabel: 'Сумма цифрами',
+    formats: AMOUNT_FORMATS,
+    texts: {
+      status: ['Сумма верная', 'Сумма верная, есть предупреждения', 'Сумма с ошибкой'],
+      inputHint: 'Например 1 234,56 или 1234.56; «BYN» и «руб.» можно не удалять',
+      generateHelp: RANDOM_ONLY,
+    },
+  },
+  { id: 'ean', title: 'Штрихкод EAN', category: 'goods', inputLabel: 'EAN-13 или EAN-8', formats: EAN_FORMATS },
+  {
+    id: 'customs-declaration',
+    title: 'Номер таможенной декларации',
+    category: 'goods',
+    inputLabel: 'Регистрационный номер ДТ',
+    formats: CUSTOMS_FORMATS,
+    texts: { inputHint: 'Вид 06532/220211/0001122; пробелы не важны', generateHelp: RANDOM_ONLY },
+  },
   { id: 'plate', title: 'Номерной знак', category: 'transport', inputLabel: 'Регистрационный знак', formats: PLATE_FORMATS,
     texts: { inputHint: 'Кириллицей или латиницей; пробелы, дефисы и регистр не важны', generateHelp: RANDOM_ONLY },
   },
@@ -108,6 +150,15 @@ export const TOOLS: Tool[] = [
     formats: CADASTRAL_FORMATS,
     texts: { generateHelp: RANDOM_ONLY },
   },
+  {
+    id: 'inventory',
+    title: 'Инвентарный номер',
+    category: 'addresses',
+    inputLabel: 'Инвентарный номер строения или помещения',
+    formats: INVENTORY_FORMATS,
+    texts: { inputHint: 'Вид 500/C-66910; регистр и пробелы не важны', generateHelp: RANDOM_ONLY },
+  },
+  { id: 'address', title: 'Адрес', category: 'addresses', inputLabel: '', formats: [], page: 'address' },
   { id: 'phone', title: 'Телефон', category: 'contacts', inputLabel: 'Номер телефона', formats: PHONE_FORMATS, texts: { generateHelp: RANDOM_ONLY } },
   { id: 'email', title: 'Email', category: 'contacts', inputLabel: 'Адрес электронной почты', formats: EMAIL_FORMATS,
     texts: { status: masculine('Адрес'), inputHint: 'Пробелы по краям не важны', generateHelp: RANDOM_ONLY },
