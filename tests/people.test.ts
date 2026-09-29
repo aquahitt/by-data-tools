@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mulberry32 } from '../src/core/random';
 import { transliterate } from '../src/core/translit';
-import { suggestOtherFormat } from '../src/formats';
 import { card } from '../src/formats/card';
 import { email } from '../src/formats/email';
 import { ibanBy } from '../src/formats/iban';
@@ -11,9 +10,8 @@ import { passport1996 } from '../src/formats/passport1996';
 import { generatePersona, PERSONA_FIELDS, toCsv, toJson } from '../src/formats/persona';
 import { phoneMobile } from '../src/formats/phone';
 import { postalCode } from '../src/formats/postal';
-import { NAME_FORMATS } from '../src/formats/translitName';
+import { nameFormat } from '../src/formats/translitName';
 
-const [be, ru] = NAME_FORMATS;
 
 describe('transliteration — MVD instruction No. 288 (MFA table)', () => {
   // Examples published by the MFA; «Лябецкая – Liabetskaja» there contradicts its own rule «Е — IE после
@@ -52,60 +50,66 @@ describe('transliteration — ICAO 9303', () => {
 });
 
 describe('name section', () => {
-  it('shows both spellings of a full name', () => {
-    expect(be.parse('  Кавалёва   Ганна  ')).toEqual([
-      { label: 'Инструкция МВД № 288 (таблица МИД)', value: 'KAVALIOVA GANNA' },
-      { label: 'ICAO 9303 (Г → H)', value: 'KAVALEVA HANNA' },
+  it('reads a Belarusian name by І, Ў or the apostrophe and shows both schemes', () => {
+    expect(nameFormat.parse('  Кавалёва   Ганна  Іванаўна')).toEqual([
+      { label: 'Написание', value: 'белорусское (есть І, Ў или апостроф)' },
+      { label: 'ICAO 9303', value: 'KAVALEVA HANNA IVANAUNA' },
+      { label: 'Инструкция МВД № 288', value: 'KAVALIOVA GANNA IVANAWNA' },
     ]);
   });
 
-  it('points to the Russian form for letters the Belarusian alphabet lacks, and back', () => {
-    expect(be.validate('Дмитрий').errors).toEqual([
-      { code: 'ALPHABET', message: 'Буквы «И» нет в белорусском алфавите', position: 3 },
-      { code: 'ALPHABET', message: 'Буквы «И» нет в белорусском алфавите', position: 6 },
+  it('reads a Russian name by И, Щ or Ъ', () => {
+    expect(nameFormat.parse('Галина Ивановна')?.slice(0, 2)).toEqual([
+      { label: 'Написание', value: 'русское (есть И, Щ или Ъ)' },
+      { label: 'ICAO 9303', value: 'GALINA IVANOVNA' },
     ]);
-    expect(suggestOtherFormat('Дмитрий', 'be', NAME_FORMATS)?.id).toBe('ru');
-    expect(suggestOtherFormat('Дзмітрый', 'ru', NAME_FORMATS)?.id).toBe('be');
+  });
+
+  it('shows both readings when the letters do not tell and the Latin differs', () => {
+    expect(nameFormat.parse('Гук Ева')).toEqual([
+      { label: 'Написание', value: 'не определяется — нет букв І, Ў, И, Щ, Ъ' },
+      { label: 'ICAO 9303, если белорусское', value: 'HUK EVA' },
+      { label: 'ICAO 9303, если русское', value: 'GUK EVA' },
+      { label: 'Инструкция МВД № 288, если белорусское', value: 'GUK JEVA' },
+      { label: 'Инструкция МВД № 288, если русское', value: 'GUK EVA' },
+    ]);
+    // Same Latin in both readings collapses into one row.
+    expect(nameFormat.parse('Павел Жук')?.slice(1)).toEqual([
+      { label: 'ICAO 9303', value: 'PAVEL ZHUK' },
+      { label: 'Инструкция МВД № 288, если белорусское', value: 'PAVIEL ZHUK' },
+      { label: 'Инструкция МВД № 288, если русское', value: 'PAVEL ZHUK' },
+    ]);
+  });
+
+  it('rejects mixed alphabets at the Russian letters', () => {
+    expect(nameFormat.validate('Дзмітрий').errors).toEqual([
+      { code: 'MIXED', message: 'Буква «И» — из русского алфавита, а в тексте есть белорусские І, Ў или апостроф', position: 7 },
+    ]);
   });
 
   it('rejects Latin letters and digits', () => {
-    expect(ru.validate('Ivan').errors[0]).toEqual({ code: 'INVALID_CHAR', message: 'Латинская буква «I»: введите имя кириллицей', position: 1 });
-    expect(ru.validate('Иван2').valid).toBe(false);
+    expect(nameFormat.validate('Ivan').errors[0]).toEqual({ code: 'INVALID_CHAR', message: 'Латинская буква «I»: введите имя кириллицей', position: 1 });
+    expect(nameFormat.validate('Иван2').valid).toBe(false);
   });
 
   it('generates one person in Russian, Belarusian and Latin spelling', () => {
     for (let seed = 1; seed <= 100; seed++) {
-      const r = ru.generate({ gender: 'M' }, mulberry32(seed));
+      const r = nameFormat.generate({ gender: seed % 2 ? 'M' : 'F' }, mulberry32(seed));
       if (!r.ok) throw new Error('generator failed');
       const [ruForm, beForm, icao, mvd] = r.variants!.map((v) => v.value);
       expect(r.variants!.map((v) => v.label)).toEqual(['RU', 'BY', 'EN (ICAO)', 'EN (МВД № 288)']);
       expect(r.value).toBe(ruForm);
-      expect(ru.validate(ruForm).valid).toBe(true);
-      expect(be.validate(beForm).valid).toBe(true);
+      expect(nameFormat.validate(ruForm).valid).toBe(true);
+      expect(nameFormat.validate(beForm).valid).toBe(true);
       const [last, first] = beForm.split(' ');
       expect(icao).toBe(transliterate(`${last} ${first}`, 'be', 'icao'));
       expect(mvd).toBe(transliterate(`${last} ${first}`, 'be', 'mvd'));
-      expect(ruForm.split(' ')[2]).toMatch(/вич$|ич$/);
-      expect(beForm.split(' ')[2]).toMatch(/віч$/);
-    }
-  });
-
-  it('pairs the Russian and Belarusian forms of the same name', () => {
-    const r = be.generate({ gender: 'F' }, mulberry32(3));
-    if (!r.ok) throw new Error('generator failed');
-    const [ruForm, beForm] = r.variants!.map((v) => v.value);
-    expect(r.value).toBe(beForm);
-    expect(ruForm.split(' ')[2]).toMatch(/вна$|ична$/);
-    expect(beForm.split(' ')[2]).toMatch(/ўна$/);
-  });
-
-  it('generates names of the chosen sex in the chosen spelling', () => {
-    for (let seed = 1; seed <= 100; seed++) {
-      const r = be.generate({ gender: 'F' }, mulberry32(seed));
-      expect(r.ok).toBe(true);
-      if (r.ok) {
-        expect(be.validate(r.value).valid).toBe(true);
-        expect(r.value.split(' ')[2]).toMatch(/аўна$|еўна$|оўна$/);
+      if (seed % 2) {
+        expect(ruForm.split(' ')[2]).toMatch(/ич$/);
+        expect(beForm.split(' ')[2]).toMatch(/віч$/);
+      } else {
+        expect(ruForm.split(' ')[2]).toMatch(/вна$|ична$/);
+        expect(beForm.split(' ')[2]).toMatch(/ўна$/);
       }
     }
   });
@@ -147,10 +151,14 @@ describe('persona', () => {
     }
   });
 
-  it('honours the chosen sex and spelling', () => {
-    const p = generatePersona(mulberry32(5), { gender: 'F', language: 'be' });
+  it('gives the name in both spellings of the same person, Latin from the Belarusian form', () => {
+    const p = generatePersona(mulberry32(5), { gender: 'F' });
     expect(p.gender).toBe('женский');
-    expect(be.validate(`${p.lastName} ${p.firstName} ${p.middleName}`).valid).toBe(true);
+    for (const q of [p, ...people]) {
+      expect(nameFormat.parse(`${q.lastName} ${q.firstName} ${q.middleName}`)).not.toBeNull();
+      expect(nameFormat.validate(`${q.lastNameBy} ${q.firstNameBy} ${q.middleNameBy}`).valid).toBe(true);
+      expect(q.latinName).toBe(transliterate(`${q.lastNameBy} ${q.firstNameBy}`, 'be', 'icao'));
+    }
   });
 
   it('exports JSON and semicolon CSV with a header row', () => {
@@ -158,7 +166,7 @@ describe('persona', () => {
     expect(JSON.parse(toJson(two))).toEqual(two);
     const lines = toCsv(two).split('\r\n');
     expect(lines).toHaveLength(3);
-    expect(lines[0].split(';')[0]).toBe('"Фамилия"');
+    expect(lines[0].split(';')[0]).toBe('"Фамилия (RU)"');
     expect(lines[1].split(';')[0]).toBe(`"${two[0].lastName}"`);
   });
 });

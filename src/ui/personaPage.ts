@@ -1,7 +1,6 @@
 import type { MdOutlinedSelect } from '@material/web/select/outlined-select.js';
 import type { MdOutlinedTextField } from '@material/web/textfield/outlined-text-field.js';
 import { cryptoRng } from '../core/random';
-import type { NameLanguage } from '../core/translit';
 import type { Rng } from '../core/types';
 import type { Gender } from '../formats/names';
 import { generatePersona, PERSONA_FIELDS, type Persona, toCsv, toJson } from '../formats/persona';
@@ -23,10 +22,6 @@ export function mountPersonaPage(root: HTMLElement, rng: Rng = cryptoRng): void 
     ['M', 'Мужской'],
     ['F', 'Женский'],
   ]);
-  const language = select('Написание ФИО', [
-    ['ru', 'Русское'],
-    ['be', 'Белорусское'],
-  ]);
   const count: MdOutlinedTextField = el('md-outlined-text-field', {
     label: `Количество (1–${MAX})`,
     value: '1',
@@ -39,12 +34,12 @@ export function mountPersonaPage(root: HTMLElement, rng: Rng = cryptoRng): void 
   const output = el('div', { class: 'persona-output', 'aria-live': 'polite' });
 
   root.append(
-    el('p', { class: 'notice' }, 'Значения согласованы между собой: пол и дата рождения — с идентификационным номером, область — с серией паспорта и индексом. Email — на резервном домене example.com, номера карт банками не выпущены. Только для тестов.'),
+    el('p', { class: 'notice' }, 'Значения согласованы между собой: ФИО по-русски и по-белорусски, латиница — из белорусской формы, как в документах; пол и дата рождения — с идентификационным номером, область — с серией паспорта и индексом. Email — на резервном домене example.com, номера карт банками не выпущены. Только для тестов.'),
     el(
       'section',
       { class: 'card', 'aria-labelledby': 'persona-generate' },
       el('h2', { id: 'persona-generate' }, 'Генерация'),
-      el('div', { class: 'fields' }, gender, language, count),
+      el('div', { class: 'fields' }, gender, count),
       el('div', { class: 'actions' }, button),
       output,
     ),
@@ -77,10 +72,7 @@ export function mountPersonaPage(root: HTMLElement, rng: Rng = cryptoRng): void 
     }
     count.error = false;
     count.errorText = '';
-    const options = {
-      gender: (gender.value || undefined) as Gender | undefined,
-      language: (language.value || undefined) as NameLanguage | undefined,
-    };
+    const options = { gender: (gender.value || undefined) as Gender | undefined };
     personas = Array.from({ length: n }, () => generatePersona(rng, options));
     render();
   }
