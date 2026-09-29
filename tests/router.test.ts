@@ -34,6 +34,10 @@ describe('resolveRoute', () => {
     expect(resolve('#/passport-number?format=biometric')).toEqual({ toolId: 'passport-number', format: 'biometric' });
   });
 
+  it.each(['phone', 'iban'])('opens the %s section', (id) => {
+    expect(resolve(`#/${id}`)).toEqual({ toolId: id, format: null });
+  });
+
   it('opens the UNP section once it is implemented', () => {
     expect(resolve('#/unp')).toEqual({ toolId: 'unp', format: null });
   });

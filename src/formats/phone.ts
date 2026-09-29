@@ -1,4 +1,5 @@
 import { resolveFields } from '../core/fields';
+import { describeChar } from '../core/normalize';
 import { pad, pick, randInt } from '../core/random';
 import type { FieldSpec, FormatModule, GenerateResult, Issue, ParsedField, Rng, ValidationResult } from '../core/types';
 
@@ -6,7 +7,9 @@ import type { FieldSpec, FormatModule, GenerateResult, Issue, ParsedField, Rng, 
 // as summarised by ru.wikipedia.org "Телефонный план нумерации Беларуси" and the A1 dialling rules:
 // +375 and a nine-digit national number. No check digit — only the shape and the codes are verified.
 
-const SEPARATORS = /[\s\-\u2010-\u2015\u2212().+/]/g;
+// Characters people put between digits, incl. invisible ones pasted from documents.
+const SEPARATOR = /[\s\-\u00AD\u200B-\u200D\u2010-\u2015\u2060\u2212()./]/;
+const SEPARATORS = new RegExp(SEPARATOR.source, 'g');
 
 // Code 29 is shared; the operator follows the first subscriber digit.
 const MOBILE_CODES: Record<string, string> = { '25': 'life:)', '29': '', '33': 'МТС', '44': 'A1' };
@@ -48,13 +51,22 @@ type National = { national: string; errors: [] } | { national: null; errors: Iss
 
 /** Accepts +375 / 375 / 00375 (optionally with the trunk 0, as in "+375 (029)"), 8 0XX, 0XX or nine bare digits. */
 function toNational(input: string): National {
-  const cleaned = input.trim().replace(SEPARATORS, '');
-  const bad = [...cleaned].findIndex((ch) => !/\d/.test(ch));
-  if (bad >= 0) {
-    return { national: null, errors: [{ code: 'INVALID_CHAR', message: `Недопустимый символ «${cleaned[bad]}»`, position: bad + 1 }] };
+  const text = input.trim();
+  const errors: Issue[] = [];
+  let digits = '';
+  let plus = false;
+  // Positions refer to the text as typed, so a message points at the character the user sees.
+  [...text].forEach((ch, i) => {
+    if (/\d/.test(ch)) digits += ch;
+    else if (ch === '+' && i === 0) plus = true;
+    else if (!SEPARATOR.test(ch)) errors.push({ code: 'INVALID_CHAR', message: describeChar(ch), position: i + 1 });
+  });
+  if (errors.length > 0) return { national: null, errors };
+  if (plus && !digits.startsWith('375')) {
+    return { national: null, errors: [{ code: 'FORMAT', message: 'После «+» ожидается код страны 375' }] };
   }
-  const m = /^(?:(?:00)?3750?|80|0)?(\d{9})$/.exec(cleaned);
-  if (!m || (cleaned.length === 9 && cleaned.startsWith('0'))) {
+  const m = /^(?:(?:00)?3750?|80|0)?(\d{9})$/.exec(digits);
+  if (!m || (digits.length === 9 && digits.startsWith('0'))) {
     return {
       national: null,
       errors: [{ code: 'FORMAT', message: 'Ожидается +375 XX XXX-XX-XX, 8 0XX XXX-XX-XX или 9 цифр национального номера' }],
@@ -65,7 +77,15 @@ function toNational(input: string): National {
 
 const groupSubscriber = (s: string) => (s.length === 7 ? `${s.slice(0, 3)}-${s.slice(3, 5)}-${s.slice(5)}` : `${s.slice(0, 2)}-${s.slice(2, 4)}-${s.slice(4)}`);
 
-function notations(national: string, codeLength: number): ParsedField[] {
+/** `codeLength` null: the area code is not known, so the number is shown without a guessed split. */
+function notations(national: string, codeLength: number | null): ParsedField[] {
+  if (codeLength === null) {
+    return [
+      { label: 'E.164', value: `+375${national}` },
+      { label: 'Международный формат', value: `+375 ${national}` },
+      { label: 'Внутри страны', value: `8 0${national}` },
+    ];
+  }
   const code = national.slice(0, codeLength);
   const subscriber = groupSubscriber(national.slice(codeLength));
   return [
@@ -216,9 +236,15 @@ function generateLandline(partial: Record<string, string>, rng: Rng): GenerateRe
   return { ok: true, value: `+375${national}`, hint: hintFor(national, centre.code.length) };
 }
 
-function landlineCity(national: string): string {
+/** The regional centre a number belongs to; Minsk only for subscriber numbers starting with 2 or 3. */
+function landlineCentre(national: string): Centre | undefined {
   const centre = centreOf(national);
-  if (centre && (centre.code !== '17' || '23'.includes(national[2]))) return centre.city;
+  return centre && (centre.code !== '17' || centre.firstDigits.includes(national[2])) ? centre : undefined;
+}
+
+function landlineCity(national: string): string {
+  const centre = landlineCentre(national);
+  if (centre) return centre.city;
   return national.startsWith('17') ? 'Минская область (районный код)' : 'районный код';
 }
 
@@ -237,8 +263,7 @@ export const phoneLandline: FormatModule = {
     const n = toNational(input);
     if (n.national === null || !Object.hasOwn(ZONES, n.national.slice(0, 2))) return null;
     const zone = n.national.slice(0, 2);
-    // Regional centres have three-digit codes; Minsk and unknown district codes are shown after the zone.
-    const codeLength = centreOf(n.national)?.code.length === 3 ? 3 : 2;
+    const codeLength = landlineCentre(n.national)?.code.length ?? null;
     return [
       { label: 'Тип', value: 'стационарный' },
       { label: 'Область', value: `${zone} — ${ZONES[zone]}` },

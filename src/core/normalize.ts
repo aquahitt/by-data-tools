@@ -12,7 +12,7 @@ const NOISE = /[\s\-\u00AD\u200B-\u200D\u2010-\u2015\u2060\u2212]/g;
 // Format, control and separator characters render as nothing, so quote them by code point.
 const INVISIBLE = /^[\p{C}\p{Z}]$/u;
 
-function describeChar(ch: string): string {
+export function describeChar(ch: string): string {
   if (!INVISIBLE.test(ch)) return `Недопустимый символ «${ch}»`;
   const code = ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0');
   return `Недопустимый невидимый символ U+${code}`;

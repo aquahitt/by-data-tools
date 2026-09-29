@@ -30,7 +30,7 @@ describe('phoneMobile.validate', () => {
 
   it('rejects letters with their position', () => {
     expect(phoneMobile.validate('+375 29 123-45-6X').errors).toEqual([
-      { code: 'INVALID_CHAR', message: 'Недопустимый символ «X»', position: 12 },
+      { code: 'INVALID_CHAR', message: 'Недопустимый символ «X»', position: 17 },
     ]);
   });
 });
@@ -162,3 +162,49 @@ describe('phone review fixes', () => {
   });
 });
 
+describe('phone input follow-ups', () => {
+  it.each(['+29 123 45 67', '+80291234567'])('rejects a + that is not followed by 375 in %j', (input) => {
+    expect(phoneMobile.validate(input).errors).toEqual([
+      { code: 'FORMAT', message: 'После «+» ожидается код страны 375' },
+    ]);
+  });
+
+  it('rejects a + in the middle with its position', () => {
+    expect(phoneMobile.validate('29+1234567').errors).toEqual([
+      { code: 'INVALID_CHAR', message: 'Недопустимый символ «+»', position: 3 },
+    ]);
+  });
+
+  it('reports every bad character at its position in the typed text', () => {
+    expect(phoneMobile.validate('+375 29 1x3 4y 67').errors).toEqual([
+      { code: 'INVALID_CHAR', message: 'Недопустимый символ «x»', position: 10 },
+      { code: 'INVALID_CHAR', message: 'Недопустимый символ «y»', position: 14 },
+    ]);
+  });
+
+  it('ignores zero-width separators and names other invisible characters by code point', () => {
+    expect(phoneMobile.validate('+375 29 123\u200b45\u00ad67').valid).toBe(true);
+    expect(phoneMobile.validate('+375 29 123\u206345 67').errors).toEqual([
+      { code: 'INVALID_CHAR', message: 'Недопустимый невидимый символ U+2063', position: 12 },
+    ]);
+  });
+
+  it('accepts 00375 for landline numbers', () => {
+    expect(phoneLandline.validate('00375 17 234-56-78').normalized).toBe('+375172345678');
+  });
+
+  it('does not split district numbers at a guessed code boundary', () => {
+    const lida = phoneLandline.parse('+375154123456');
+    expect(lida?.[4].value).toBe('+375 154123456');
+    expect(lida?.[5].value).toBe('8 0154123456');
+    expect(phoneLandline.parse('+375177123456')?.[4].value).toBe('+375 177123456');
+  });
+
+  it('generates landline numbers that parse back to a regional centre', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const r = phoneLandline.generate({}, mulberry32(seed));
+      expect(r.ok).toBe(true);
+      if (r.ok) expect(phoneLandline.parse(r.value)?.[2].value).not.toContain('код');
+    }
+  });
+});
