@@ -89,3 +89,11 @@ describe('modern.generate', () => {
     }
   });
 });
+
+describe('Cyrillic О in the personal number', () => {
+  it('reports the replaced letter O as a wrong group 2, with the replacement warning', () => {
+    const r = modern.validate('7000000О000PB1');
+    expect(r.errors.map((e) => e.code)).toEqual(['GROUP2', 'CHECK_DIGIT']);
+    expect(r.warnings.map((w) => w.code)).toEqual(['CYRILLIC_REPLACED']);
+  });
+});

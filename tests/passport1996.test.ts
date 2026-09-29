@@ -64,3 +64,11 @@ describe('passport1996.generate', () => {
     });
   });
 });
+
+describe('Cyrillic О and Т in other formats', () => {
+  it('turns a Cyrillic ОТ series into Latin OT: unknown series, not an invalid character', () => {
+    const r = passport1996.validate('ОТ1234567');
+    expect(r.valid).toBe(true);
+    expect(r.warnings.map((w) => w.code)).toEqual(['CYRILLIC_REPLACED', 'UNKNOWN_SERIES']);
+  });
+});

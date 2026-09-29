@@ -8,6 +8,7 @@ export const UNP_INDIVIDUAL_TEMPLATE = 'LLDDDDDDD'; //    ББ ЦЦЦЦЦЦ К
 export const IBAN_TEMPLATE = 'LLDDCCCCDDDDCCCCCCCCCCCCCCCC'; // BY KK банк балансовый счёт номер
 
 export function structureIssues(value: string, template: string): Issue[] {
+  if (value.length === 0) return [{ code: 'EMPTY', message: 'Номер не содержит ни одной буквы или цифры' }];
   if (value.length !== template.length) {
     return [{ code: 'LENGTH', message: `Длина ${value.length}, ожидается ${template.length} символов` }];
   }

@@ -51,3 +51,11 @@ describe('structureIssues — IBAN', () => {
     ]);
   });
 });
+
+describe('structureIssues — empty input', () => {
+  it('reports an empty value instead of "length 0"', () => {
+    expect(structureIssues('', PERSONAL_NUMBER_TEMPLATE)).toEqual([
+      { code: 'EMPTY', message: 'Номер не содержит ни одной буквы или цифры' },
+    ]);
+  });
+});

@@ -59,4 +59,11 @@ describe('normalize', () => {
     expect(r.value).toBe('MO1953684');
     expect(normalize('МТ0000001').value).toBe('MT0000001');
   });
+
+  it('keeps a character whose uppercase is longer (ß) as one invalid position', () => {
+    const r = normalize('7000000Aß00PB1');
+    expect(r.value).toHaveLength(14);
+    expect(r.errors).toEqual([{ code: 'INVALID_CHAR', message: 'Недопустимый символ «ß»', position: 9 }]);
+  });
 });
+

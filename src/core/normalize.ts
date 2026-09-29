@@ -27,7 +27,12 @@ export interface Normalized {
 export function normalize(input: string): Normalized {
   const replaced: number[] = [];
   const errors: Issue[] = [];
-  const value = [...input.replace(NOISE, '').toUpperCase()]
+  // Uppercase per character: 'ß'.toUpperCase() is 'SS', which would shift every later position.
+  const value = [...input.replace(NOISE, '')]
+    .map((raw) => {
+      const upper = raw.toUpperCase();
+      return upper.length === 1 ? upper : raw;
+    })
     .map((ch, i) => {
       const latin = CYRILLIC_TO_LATIN[ch];
       if (latin) {
