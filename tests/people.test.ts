@@ -53,28 +53,68 @@ describe('name section', () => {
   it('reads a Belarusian name by І, Ў or the apostrophe and shows both schemes', () => {
     expect(nameFormat.parse('  Кавалёва   Ганна  Іванаўна')).toEqual([
       { label: 'Написание', value: 'белорусское (есть І, Ў или апостроф)' },
+      { label: 'RU', value: 'Ковалёва Анна Ивановна' },
+      { label: 'BY', value: 'Кавалёва Ганна Іванаўна' },
       { label: 'ICAO 9303', value: 'KAVALEVA HANNA IVANAUNA' },
       { label: 'Инструкция МВД № 288', value: 'KAVALIOVA GANNA IVANAWNA' },
     ]);
   });
 
-  it('reads a Russian name by И, Щ or Ъ', () => {
-    expect(nameFormat.parse('Галина Ивановна')?.slice(0, 2)).toEqual([
+  it('reads a Russian name by И, Щ or Ъ and gives its Belarusian form and passport spelling', () => {
+    expect(nameFormat.parse('Иванов Сергей Петрович')).toEqual([
       { label: 'Написание', value: 'русское (есть И, Щ или Ъ)' },
-      { label: 'ICAO 9303', value: 'GALINA IVANOVNA' },
+      { label: 'RU', value: 'Иванов Сергей Петрович' },
+      { label: 'BY', value: 'Іваноў Сяргей Пятровіч' },
+      { label: 'Латиница из белорусской формы (ICAO, как в паспорте)', value: 'IVANOU SIARHEI' },
+      { label: 'ICAO 9303', value: 'IVANOV SERGEI PETROVICH' },
+      { label: 'Инструкция МВД № 288', value: 'IVANOV SERGEJ PETROVICH' },
     ]);
+  });
+
+  it('keeps the case of the input and converts double surnames part by part', () => {
+    expect(nameFormat.parse('ПЕТРОВА ЕЛЕНА ВИКТОРОВНА')?.[2]).toEqual({ label: 'BY', value: 'ПЯТРОВА АЛЕНА ВІКТАРАЎНА' });
+    expect(nameFormat.parse('Смирнова-Петрова Анна')?.[2]).toEqual({ label: 'BY', value: 'Смірнова-Пятрова Ганна' });
+  });
+
+  it('tells the surname from the patronymic by position (Богданович)', () => {
+    expect(nameFormat.parse('Богданович Анна Богдановна')?.[2]).toEqual({ label: 'BY', value: 'Багдановіч Ганна Багданаўна' });
+  });
+
+  it('names the words it cannot translate and gives no passport spelling then', () => {
+    const rows = nameFormat.parse('Сидорчук Иван')!;
+    expect(rows.slice(1, 4)).toEqual([
+      { label: 'RU', value: 'Сидорчук Иван' },
+      { label: 'BY', value: 'Сидорчук Іван' },
+      { label: 'Нет в словаре — оставлено как есть', value: 'Сидорчук' },
+    ]);
+    expect(rows.some((r) => r.label.startsWith('Латиница из белорусской'))).toBe(false);
+  });
+
+  it('translates every generated name both ways', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const r = nameFormat.generate({}, mulberry32(seed));
+      if (!r.ok) throw new Error('generator failed');
+      const [ruForm, beForm] = r.variants!.map((v) => v.value);
+      const fromRu = nameFormat.parse(ruForm)!;
+      const fromBe = nameFormat.parse(beForm)!;
+      const value = (rows: typeof fromRu, label: string) => rows.find((x) => x.label === label || x.label === 'RU и BY')?.value;
+      expect(value(fromRu, 'BY')).toBe(beForm);
+      expect(value(fromBe, 'RU')).toBe(ruForm);
+    }
   });
 
   it('shows both readings when the letters do not tell and the Latin differs', () => {
     expect(nameFormat.parse('Гук Ева')).toEqual([
       { label: 'Написание', value: 'не определяется — нет букв І, Ў, И, Щ, Ъ' },
+      { label: 'RU и BY', value: 'Гук Ева' },
+      { label: 'Нет в словаре — оставлено как есть', value: 'Гук, Ева' },
       { label: 'ICAO 9303, если белорусское', value: 'HUK EVA' },
       { label: 'ICAO 9303, если русское', value: 'GUK EVA' },
       { label: 'Инструкция МВД № 288, если белорусское', value: 'GUK JEVA' },
       { label: 'Инструкция МВД № 288, если русское', value: 'GUK EVA' },
     ]);
     // Same Latin in both readings collapses into one row.
-    expect(nameFormat.parse('Павел Жук')?.slice(1)).toEqual([
+    expect(nameFormat.parse('Павел Жук')?.slice(2)).toEqual([
       { label: 'ICAO 9303', value: 'PAVEL ZHUK' },
       { label: 'Инструкция МВД № 288, если белорусское', value: 'PAVIEL ZHUK' },
       { label: 'Инструкция МВД № 288, если русское', value: 'PAVEL ZHUK' },
@@ -106,10 +146,10 @@ describe('name section', () => {
       expect(mvd).toBe(transliterate(`${last} ${first}`, 'be', 'mvd'));
       if (seed % 2) {
         expect(ruForm.split(' ')[2]).toMatch(/ич$/);
-        expect(beForm.split(' ')[2]).toMatch(/віч$/);
+        expect(beForm.split(' ')[2]).toMatch(/іч$/);
       } else {
         expect(ruForm.split(' ')[2]).toMatch(/вна$|ична$/);
-        expect(beForm.split(' ')[2]).toMatch(/ўна$/);
+        expect(beForm.split(' ')[2]).toMatch(/ўна$|ічна$/);
       }
     }
   });

@@ -3,7 +3,7 @@ import { describeChar } from '../core/normalize';
 import { pick } from '../core/random';
 import { type NameLanguage, type TranslitScheme, transliterate } from '../core/translit';
 import type { FieldSpec, FormatModule, GenerateResult, Issue, ParsedField, Rng, ValidationResult } from '../core/types';
-import { randomNameForms } from './names';
+import { convertName, randomNameForms } from './names';
 
 // Name in Cyrillic → its Latin spelling in documents, by both schemes (see core/translit.ts). The language is read
 // from the letters: І, Ў and the apostrophe exist only in Belarusian, И, Щ and Ъ only in Russian. A name with none
@@ -59,6 +59,25 @@ const SCHEMES: [TranslitScheme, string][] = [
   ['mvd', 'Инструкция МВД № 288'],
 ];
 
+/** RU and BY rows from the dictionary; the passport spelling (ICAO of the Belarusian form) when it is complete. */
+function languageRows(text: string, language: NameLanguage | null): ParsedField[] {
+  const { ru, be, unknown } = convertName(text);
+  const rows: ParsedField[] =
+    ru === be
+      ? [{ label: 'RU и BY', value: ru }]
+      : [
+          { label: 'RU', value: ru },
+          { label: 'BY', value: be },
+        ];
+  if (unknown.length) rows.push({ label: 'Нет в словаре — оставлено как есть', value: unknown.join(', ') });
+  if (language !== 'be' && unknown.length === 0 && be !== ru) {
+    const [last, first] = be.split(' ');
+    const latin = transliterate(first ? `${last} ${first}` : last, 'be', 'icao');
+    rows.push({ label: 'Латиница из белорусской формы (ICAO, как в паспорте)', value: latin });
+  }
+  return rows;
+}
+
 function parse(input: string): ParsedField[] | null {
   if (check(input).length > 0) return null;
   const text = tidy(input);
@@ -66,10 +85,11 @@ function parse(input: string): ParsedField[] | null {
   if (language) {
     return [
       { label: 'Написание', value: language === 'be' ? 'белорусское (есть І, Ў или апостроф)' : 'русское (есть И, Щ или Ъ)' },
+      ...languageRows(text, language),
       ...SCHEMES.map(([scheme, label]) => ({ label, value: transliterate(text, language, scheme) })),
     ];
   }
-  const rows: ParsedField[] = [{ label: 'Написание', value: 'не определяется — нет букв І, Ў, И, Щ, Ъ' }];
+  const rows: ParsedField[] = [{ label: 'Написание', value: 'не определяется — нет букв І, Ў, И, Щ, Ъ' }, ...languageRows(text, null)];
   for (const [scheme, label] of SCHEMES) {
     const be = transliterate(text, 'be', scheme);
     const ru = transliterate(text, 'ru', scheme);
@@ -116,7 +136,7 @@ export const nameFormat: FormatModule = {
   title: 'ФИО',
   official: true,
   notice:
-    'Язык определяется по буквам: І, Ў и апостроф — белорусское написание, И, Щ, Ъ — русское; без них показываются оба прочтения. Источники расходятся в том, какая схема латиницы применяется по умолчанию: МИД ссылается на Инструкцию МВД № 288 (Г → G, Й → J, Ў → W), а в выданных паспортах встречается написание по ICAO 9303 (Сяргей → SIARHEI). Показаны обе.',
+    'Язык определяется по буквам: І, Ў и апостроф — белорусское написание, И, Щ, Ъ — русское; без них показываются оба прочтения. Имена не транслитерируются, а переводятся (Сергей — Сяргей, Елена — Алена), поэтому RU и BY берутся из словаря распространённых имён и фамилий; слова не из словаря остаются как есть. Источники расходятся в том, какая схема латиницы применяется по умолчанию: МИД ссылается на Инструкцию МВД № 288 (Г → G, Й → J, Ў → W), а в выданных паспортах встречается написание по ICAO 9303 (Сяргей → SIARHEI). Показаны обе.',
   fields,
   validate: (input): ValidationResult => {
     const errors = check(input);

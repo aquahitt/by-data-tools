@@ -2,8 +2,10 @@ import { pick } from '../core/random';
 import { type NameLanguage, transliterate } from '../core/translit';
 import type { Rng } from '../core/types';
 
-// Common Belarusian first names and surnames in Russian and Belarusian spelling — a small dictionary chosen by
-// this tool, enough for varied test data. Patronymics are listed, not derived: the rules have many exceptions.
+// Common Belarusian first names and surnames in Russian and Belarusian spelling — a dictionary chosen by this tool,
+// used both to generate test people and to give a typed name in the other language. Names are translated, not
+// transliterated (Сергей — Сяргей, Елена — Алена), so a word outside the dictionary is not converted.
+// Patronymics are listed, not derived: the rules have many exceptions.
 
 export type Gender = 'M' | 'F';
 
@@ -34,6 +36,26 @@ const MALE: [string, string, string, string, string, string][] = [
   ['Роман', 'Раман', 'Романович', 'Романовна', 'Раманавіч', 'Раманаўна'],
   ['Пётр', 'Пятро', 'Петрович', 'Петровна', 'Пятровіч', 'Пятроўна'],
   ['Геннадий', 'Генадзь', 'Геннадьевич', 'Геннадьевна', 'Генадзевіч', 'Генадзеўна'],
+  ['Анатолий', 'Анатоль', 'Анатольевич', 'Анатольевна', 'Анатолевіч', 'Анатолеўна'],
+  ['Валерий', 'Валерый', 'Валерьевич', 'Валерьевна', "Валер'евіч", "Валер'еўна"],
+  ['Григорий', 'Рыгор', 'Григорьевич', 'Григорьевна', 'Рыгоравіч', 'Рыгораўна'],
+  ['Георгий', 'Георгій', 'Георгиевич', 'Георгиевна', 'Георгіевіч', 'Георгіеўна'],
+  ['Леонид', 'Леанід', 'Леонидович', 'Леонидовна', 'Леанідавіч', 'Леанідаўна'],
+  ['Степан', 'Сцяпан', 'Степанович', 'Степановна', 'Сцяпанавіч', 'Сцяпанаўна'],
+  ['Фёдор', 'Фёдар', 'Фёдорович', 'Фёдоровна', 'Фёдаравіч', 'Фёдараўна'],
+  ['Яков', 'Якаў', 'Яковлевич', 'Яковлевна', 'Якаўлевіч', 'Якаўлеўна'],
+  ['Тимофей', 'Цімафей', 'Тимофеевич', 'Тимофеевна', 'Цімафеевіч', 'Цімафееўна'],
+  ['Илья', 'Ілья', 'Ильич', 'Ильинична', 'Ільіч', 'Ільінічна'],
+  ['Станислав', 'Станіслаў', 'Станиславович', 'Станиславовна', 'Станіслававіч', 'Станіславаўна'],
+  ['Константин', 'Канстанцін', 'Константинович', 'Константиновна', 'Канстанцінавіч', 'Канстанцінаўна'],
+  ['Глеб', 'Глеб', 'Глебович', 'Глебовна', 'Глебавіч', 'Глебаўна'],
+  ['Богдан', 'Багдан', 'Богданович', 'Богдановна', 'Багданавіч', 'Багданаўна'],
+  ['Даниил', 'Данііл', 'Даниилович', 'Данииловна', 'Даніілавіч', 'Даніілаўна'],
+  ['Матвей', 'Мацвей', 'Матвеевич', 'Матвеевна', 'Мацвеевіч', 'Мацвееўна'],
+  ['Егор', 'Ягор', 'Егорович', 'Егоровна', 'Ягоравіч', 'Ягораўна'],
+  ['Эдуард', 'Эдуард', 'Эдуардович', 'Эдуардовна', 'Эдуардавіч', 'Эдуардаўна'],
+  ['Руслан', 'Руслан', 'Русланович', 'Руслановна', 'Русланавіч', 'Русланаўна'],
+  ['Аркадий', 'Аркадзь', 'Аркадьевич', 'Аркадьевна', 'Аркадзевіч', 'Аркадзеўна'],
 ];
 
 // [ru, be]
@@ -61,6 +83,25 @@ const FEMALE: [string, string][] = [
   ['Галина', 'Галіна'],
   ['Маргарита', 'Маргарыта'],
   ['Евгения', 'Яўгенія'],
+  ['Александра', 'Аляксандра'],
+  ['Алёна', 'Алёна'],
+  ['Ангелина', 'Ангеліна'],
+  ['Антонина', 'Антаніна'],
+  ['Вера', 'Вера'],
+  ['Диана', 'Дзіяна'],
+  ['Зинаида', 'Зінаіда'],
+  ['Кристина', 'Крысціна'],
+  ['Лариса', 'Ларыса'],
+  ['Лидия', 'Лідзія'],
+  ['Любовь', 'Любоў'],
+  ['Марина', 'Марына'],
+  ['Нина', 'Ніна'],
+  ['Оксана', 'Аксана'],
+  ['Раиса', 'Раіса'],
+  ['Тамара', 'Тамара'],
+  ['Софья', "Соф'я"],
+  ['Яна', 'Яна'],
+  ['Инна', 'Іна'],
 ];
 
 // [ru m, ru f, be m, be f]
@@ -93,6 +134,26 @@ const SURNAMES: [string, string, string, string][] = [
   ['Бондарь', 'Бондарь', 'Бондар', 'Бондар'],
   ['Кравченко', 'Кравченко', 'Краўчанка', 'Краўчанка'],
   ['Сидоренко', 'Сидоренко', 'Сідарэнка', 'Сідарэнка'],
+  ['Петров', 'Петрова', 'Пятроў', 'Пятрова'],
+  ['Соколов', 'Соколова', 'Сакалоў', 'Сакалова'],
+  ['Смирнов', 'Смирнова', 'Смірноў', 'Смірнова'],
+  ['Попов', 'Попова', 'Папоў', 'Папова'],
+  ['Лебедев', 'Лебедева', 'Лебедзеў', 'Лебедзева'],
+  ['Зайцев', 'Зайцева', 'Зайцаў', 'Зайцава'],
+  ['Соловьёв', 'Соловьёва', 'Салаўёў', 'Салаўёва'],
+  ['Васильев', 'Васильева', 'Васільеў', 'Васільева'],
+  ['Михайлов', 'Михайлова', 'Міхайлаў', 'Міхайлава'],
+  ['Ковалевский', 'Ковалевская', 'Кавалеўскі', 'Кавалеўская'],
+  ['Жуковский', 'Жуковская', 'Жукоўскі', 'Жукоўская'],
+  ['Янковский', 'Янковская', 'Янкоўскі', 'Янкоўская'],
+  ['Козловский', 'Козловская', 'Казлоўскі', 'Казлоўская'],
+  ['Лисовский', 'Лисовская', 'Лісоўскі', 'Лісоўская'],
+  ['Кравец', 'Кравец', 'Кравец', 'Кравец'],
+  ['Шевчук', 'Шевчук', 'Шаўчук', 'Шаўчук'],
+  ['Герасимович', 'Герасимович', 'Герасімовіч', 'Герасімовіч'],
+  ['Тарасевич', 'Тарасевич', 'Тарасевіч', 'Тарасевіч'],
+  ['Гриневич', 'Гриневич', 'Грыневіч', 'Грыневіч'],
+  ['Юрченко', 'Юрченко', 'Юрчанка', 'Юрчанка'],
 ];
 
 export interface Person {
@@ -134,4 +195,76 @@ export function randomPerson(rng: Rng, options: { gender?: Gender; language?: Na
     latinLast: transliterate(last, language, 'icao'),
     latinFirst: transliterate(first, language, 'icao'),
   };
+}
+
+// ---------- RU ⇄ BY for a typed name ----------
+
+type Role = 'surname' | 'first' | 'middle';
+type Pair = { ru: string; be: string };
+
+const index = new Map<Role, Map<string, Pair>>([
+  ['surname', new Map()],
+  ['first', new Map()],
+  ['middle', new Map()],
+]);
+
+function add(role: Role, ru: string, be: string): void {
+  const pair = { ru, be };
+  for (const key of [ru, be]) {
+    const k = key.toUpperCase();
+    if (!index.get(role)!.has(k)) index.get(role)!.set(k, pair);
+  }
+}
+
+for (const [ru, be, rm, rf, bm, bf] of MALE) {
+  add('first', ru, be);
+  add('middle', rm, bm);
+  add('middle', rf, bf);
+}
+for (const [ru, be] of FEMALE) add('first', ru, be);
+for (const [rm, rf, bm, bf] of SURNAMES) {
+  add('surname', rm, bm);
+  add('surname', rf, bf);
+}
+
+// «Фамилия Имя Отчество» is the usual order; the other roles are tried next (Богданович: surname or patronymic).
+const ORDER: Role[][] = [
+  ['surname', 'first', 'middle'],
+  ['first', 'surname', 'middle'],
+  ['middle', 'surname', 'first'],
+];
+
+const APOSTROPHE = /[’ʼ]/g;
+
+function lookup(word: string, position: number): Pair | null {
+  const key = word.replace(APOSTROPHE, "'").toUpperCase();
+  for (const role of ORDER[Math.min(position, 2)]) {
+    const pair = index.get(role)!.get(key);
+    if (pair) return pair;
+  }
+  return null;
+}
+
+/** Same capitalisation as the typed word: ИВАНОВ → КАЗЛОЎ, иванов → казлоў, Иванов → Казлоў. */
+function likeInput(word: string, typed: string): string {
+  if (typed === typed.toUpperCase()) return word.toUpperCase();
+  if (typed === typed.toLowerCase()) return word.toLowerCase();
+  return word;
+}
+
+/** The name in Russian and in Belarusian spelling, word by word; words outside the dictionary are kept as typed. */
+export function convertName(text: string): { ru: string; be: string; unknown: string[] } {
+  const unknown: string[] = [];
+  const ru: string[] = [];
+  const be: string[] = [];
+  text.split(' ').forEach((word, position) => {
+    const parts = word.split('-').map((part) => {
+      const pair = lookup(part, position);
+      if (!pair) unknown.push(part);
+      return pair ? { ru: likeInput(pair.ru, part), be: likeInput(pair.be, part) } : { ru: part, be: part };
+    });
+    ru.push(parts.map((p) => p.ru).join('-'));
+    be.push(parts.map((p) => p.be).join('-'));
+  });
+  return { ru: ru.join(' '), be: be.join(' '), unknown };
 }
