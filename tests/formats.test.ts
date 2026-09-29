@@ -70,3 +70,13 @@ describe('suggestOtherFormat', () => {
     expect(suggestOtherFormat('+375 29 123-45-67', 'landline', PHONE_FORMATS)?.id).toBe('mobile');
   });
 });
+
+describe('suggestOtherFormat by shape', () => {
+  it('points to the individual format when only its shape fits, even with a wrong check digit', () => {
+    expect(suggestOtherFormat('MA1953681', 'organization', UNP_FORMATS)?.id).toBe('individual');
+  });
+
+  it('does not point anywhere when the current format already fits the shape', () => {
+    expect(suggestOtherFormat('200988542', 'organization', UNP_FORMATS)).toBeNull();
+  });
+});

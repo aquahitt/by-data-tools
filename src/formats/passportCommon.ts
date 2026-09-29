@@ -13,6 +13,7 @@ export const NUMBER_FIELD: FieldSpec = {
   label: 'Номер (7 цифр)',
   kind: 'text',
   placeholder: '1234567',
+  normalize: (v) => normalize(v).value,
   check: (v) => (/^\d{7}$/.test(v) ? null : 'Семь цифр, от 0000000 до 9999999'),
   random: (rng) => pad(randInt(rng, 0, 9_999_999), 7),
 };

@@ -1,6 +1,6 @@
 import { charValue } from '../core/checkDigit';
 import { UNP_INDIVIDUAL_TEMPLATE } from '../core/structure';
-import type { FormatModule } from '../core/types';
+import type { FormatModule, Issue } from '../core/types';
 import { generateUnp, parseUnp, UNP_REGIONS, type UnpScheme, unpFields, validateUnp } from './unpCommon';
 
 // Individuals, incl. sole proprietors (item 20): X1 is the region letter (A = 10 … M = 22 in the sum);
@@ -23,6 +23,13 @@ const scheme: UnpScheme = {
     const digit = X2_LETTERS.indexOf(x2to8[0]);
     return digit < 0 ? null : `${digit}${x2to8.slice(1)} (второй знак ${x2to8[0]} = ${digit})`;
   },
+  explainStructure: (issue: Issue, value: string) =>
+    issue.position === 2 && /\d/.test(value[1])
+      ? {
+          ...issue,
+          message: `Второй знак — буква вместо цифры: ${[...X2_LETTERS].map((l, d) => `${d}→${l}`).join(' ')} (здесь ${value[1]} → ${X2_LETTERS[Number(value[1])]})`,
+        }
+      : issue,
 };
 
 const fields = unpFields(scheme);

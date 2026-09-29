@@ -74,3 +74,19 @@ describe('unpIndividual.generate', () => {
     }
   });
 });
+
+describe('unpIndividual review follow-ups', () => {
+  it('explains that the second sign is a letter-coded digit', () => {
+    expect(unpIndividual.validate('M01953684').errors).toEqual([
+      {
+        code: 'STRUCTURE',
+        message: 'Второй знак — буква вместо цифры: 0→A 1→B 2→C 3→E 4→H 5→K 6→M 7→O 8→P 9→T (здесь 0 → A)',
+        position: 2,
+      },
+    ]);
+  });
+
+  it('does not add a check-digit error on top of an unknown region', () => {
+    expect(codes('DA1953684')).toEqual(['REGION']);
+  });
+});

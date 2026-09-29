@@ -72,3 +72,10 @@ describe('Cyrillic О and Т in other formats', () => {
     expect(r.warnings.map((w) => w.code)).toEqual(['CYRILLIC_REPLACED', 'UNKNOWN_SERIES']);
   });
 });
+
+describe('passport number field', () => {
+  it('accepts spaces and dashes in the generator, like the validator does', () => {
+    const r = passport1996.generate({ series: 'MP', number: '123-45 67' }, mulberry32(1));
+    expect(r.ok && r.value).toBe('MP1234567');
+  });
+});

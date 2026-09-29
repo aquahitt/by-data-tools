@@ -43,6 +43,8 @@ export interface UnpScheme {
   encodeSequence(sequence: string): string;
   /** Human reading of X2..X8, or null when X2 is not a valid code. */
   describeSequence(x2to8: string): string | null;
+  /** Optional clearer wording for a structure issue. */
+  explainStructure?(issue: Issue, value: string): Issue;
 }
 
 const PREFIX = /^\s*(унп|unp)[\s:№#]*/i;
@@ -54,16 +56,21 @@ function normalizeUnp(input: string) {
 export function validateUnp(input: string, scheme: UnpScheme): ValidationResult {
   const n = normalizeUnp(input);
   const errors: Issue[] = [...n.errors];
-  if (errors.length === 0) errors.push(...structureIssues(n.value, scheme.template));
+  if (errors.length === 0) {
+    const explain = scheme.explainStructure ?? ((issue: Issue) => issue);
+    errors.push(...structureIssues(n.value, scheme.template).map((issue) => explain(issue, n.value)));
+  }
   if (errors.length === 0) {
     const v = n.value;
-    if (!scheme.regionOf(v[0])) {
+    const regionKnown = Boolean(scheme.regionOf(v[0]));
+    if (!regionKnown) {
       errors.push({ code: 'REGION', message: `Неизвестный код области «${v[0]}»`, position: 1 });
     }
     const values = scheme.values(v.slice(0, 8));
     if (!values) {
       errors.push({ code: 'X2', message: `Второй знак «${v[1]}» не из таблицы A B C E H K M O P T`, position: 2 });
-    } else {
+    } else if (regionKnown) {
+      // With an unknown region its value still feeds the checksum, so a check-digit error would mislead.
       const control = unpControlNumber(values);
       if (control === 10) {
         errors.push({ code: 'NOT_ISSUED', message: 'Контрольное число равно 10 — такой УНП не выдаётся', position: 9 });
@@ -151,11 +158,10 @@ export function generateUnp(
     if (regionGiven && sequenceGiven) {
       // Both chosen explicitly: say so instead of silently changing the user's input.
       const nearest = nearestIssuable(scheme, region, Number(sequence));
+      const suggestion = nearest ? `. Ближайший подходящий номер — ${nearest}` : '';
       return {
         ok: false,
-        fieldErrors: {
-          sequence: `Такой УНП не выдаётся (контрольное число 10). Ближайший подходящий номер — ${nearest}`,
-        },
+        fieldErrors: { sequence: `Такой УНП не выдаётся (контрольное число 10)${suggestion}` },
       };
     }
     // Redraw whichever part was random; weight 29 is 7 mod 11, so at most two regions yield 10.
