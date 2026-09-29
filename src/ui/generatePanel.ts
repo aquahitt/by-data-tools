@@ -99,6 +99,14 @@ export function mountGeneratePanel(
     check.addEventListener('click', () => onCheck(value));
     output.append(el('output', { class: 'generated' }, value), copy, check);
     if (r.hint) output.append(el('span', { class: 'gen-hint' }, r.hint));
+    if (r.variants?.length) {
+      const rows = r.variants.map((v) => {
+        const copyVariant = el('md-icon-button', { 'aria-label': `Копировать: ${v.label}` }, mdIcon('copy'));
+        copyVariant.addEventListener('click', () => void navigator.clipboard?.writeText(v.value));
+        return el('tr', {}, el('th', { scope: 'row' }, v.label), el('td', {}, v.value), el('td', { class: 'variant-copy' }, copyVariant));
+      });
+      output.append(el('table', { class: 'parsed variants' }, el('tbody', {}, ...rows)));
+    }
   }
 
   generateButton.addEventListener('click', () =>

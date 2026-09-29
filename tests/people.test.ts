@@ -73,6 +73,32 @@ describe('name section', () => {
     expect(ru.validate('Иван2').valid).toBe(false);
   });
 
+  it('generates one person in Russian, Belarusian and Latin spelling', () => {
+    for (let seed = 1; seed <= 100; seed++) {
+      const r = ru.generate({ gender: 'M' }, mulberry32(seed));
+      if (!r.ok) throw new Error('generator failed');
+      const [ruForm, beForm, icao, mvd] = r.variants!.map((v) => v.value);
+      expect(r.variants!.map((v) => v.label)).toEqual(['RU', 'BY', 'EN (ICAO)', 'EN (МВД № 288)']);
+      expect(r.value).toBe(ruForm);
+      expect(ru.validate(ruForm).valid).toBe(true);
+      expect(be.validate(beForm).valid).toBe(true);
+      const [last, first] = beForm.split(' ');
+      expect(icao).toBe(transliterate(`${last} ${first}`, 'be', 'icao'));
+      expect(mvd).toBe(transliterate(`${last} ${first}`, 'be', 'mvd'));
+      expect(ruForm.split(' ')[2]).toMatch(/вич$|ич$/);
+      expect(beForm.split(' ')[2]).toMatch(/віч$/);
+    }
+  });
+
+  it('pairs the Russian and Belarusian forms of the same name', () => {
+    const r = be.generate({ gender: 'F' }, mulberry32(3));
+    if (!r.ok) throw new Error('generator failed');
+    const [ruForm, beForm] = r.variants!.map((v) => v.value);
+    expect(r.value).toBe(beForm);
+    expect(ruForm.split(' ')[2]).toMatch(/вна$|ична$/);
+    expect(beForm.split(' ')[2]).toMatch(/ўна$/);
+  });
+
   it('generates names of the chosen sex in the chosen spelling', () => {
     for (let seed = 1; seed <= 100; seed++) {
       const r = be.generate({ gender: 'F' }, mulberry32(seed));

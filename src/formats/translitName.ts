@@ -3,7 +3,7 @@ import { describeChar } from '../core/normalize';
 import { pick } from '../core/random';
 import { type NameLanguage, transliterate } from '../core/translit';
 import type { FieldSpec, FormatModule, GenerateResult, Issue, ParsedField, Rng, ValidationResult } from '../core/types';
-import { fullName, randomPerson } from './names';
+import { randomNameForms } from './names';
 
 // Name in Cyrillic → its Latin spelling in documents, by both schemes (see core/translit.ts).
 
@@ -77,9 +77,19 @@ function makeFormat(language: NameLanguage): FormatModule {
     generate: (partial, rng): GenerateResult => {
       const { values, fieldErrors } = resolveFields(fields, partial, rng);
       if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors };
-      const person = randomPerson(rng, { gender: values.gender as 'M' | 'F', language });
-      const name = fullName(person);
-      return { ok: true, value: name, hint: `${transliterate(`${person.last} ${person.first}`, language, 'icao')} (ICAO)` };
+      const forms = randomNameForms(rng, values.gender as 'M' | 'F');
+      const be = forms.be.join(' ');
+      return {
+        ok: true,
+        value: forms[language].join(' '),
+        // Documents take the Latin spelling from the Belarusian form; the patronymic is not written in Latin.
+        variants: [
+          { label: 'RU', value: forms.ru.join(' ') },
+          { label: 'BY', value: be },
+          { label: 'EN (ICAO)', value: transliterate(`${forms.be[0]} ${forms.be[1]}`, 'be', 'icao') },
+          { label: 'EN (МВД № 288)', value: transliterate(`${forms.be[0]} ${forms.be[1]}`, 'be', 'mvd') },
+        ],
+      };
     },
   };
 }

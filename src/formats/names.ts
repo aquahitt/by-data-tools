@@ -106,15 +106,25 @@ export interface Person {
   latinFirst: string;
 }
 
+/** Surname, first name and patronymic. */
+export type NameForm = [last: string, first: string, middle: string];
+
+/** One person's name in both spellings: the same surname, name and father's name in Russian and in Belarusian. */
+export function randomNameForms(rng: Rng, gender: Gender): Record<NameLanguage, NameForm> {
+  const father = pick(rng, MALE);
+  const surname = pick(rng, SURNAMES);
+  const own = gender === 'M' ? pick(rng, MALE) : pick(rng, FEMALE);
+  const f = gender === 'M' ? 0 : 1;
+  return {
+    ru: [surname[f], own[0], father[2 + f]],
+    be: [surname[2 + f], own[1], father[4 + f]],
+  };
+}
+
 export function randomPerson(rng: Rng, options: { gender?: Gender; language?: NameLanguage }): Person {
   const gender = options.gender ?? pick(rng, ['M', 'F'] as const);
   const language = options.language ?? pick(rng, ['ru', 'be'] as const);
-  const be = language === 'be';
-  const father = pick(rng, MALE);
-  const surname = pick(rng, SURNAMES);
-  const first = gender === 'M' ? pick(rng, MALE)[be ? 1 : 0] : pick(rng, FEMALE)[be ? 1 : 0];
-  const middle = father[(be ? 4 : 2) + (gender === 'M' ? 0 : 1)];
-  const last = surname[(be ? 2 : 0) + (gender === 'M' ? 0 : 1)];
+  const [last, first, middle] = randomNameForms(rng, gender)[language];
   return {
     gender,
     language,
@@ -125,5 +135,3 @@ export function randomPerson(rng: Rng, options: { gender?: Gender; language?: Na
     latinFirst: transliterate(first, language, 'icao'),
   };
 }
-
-export const fullName = (p: Person) => `${p.last} ${p.first} ${p.middle}`;

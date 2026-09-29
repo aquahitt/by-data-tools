@@ -37,7 +37,13 @@ export interface FieldSpec {
 }
 
 export type GenerateResult =
-  | { ok: true; value: string; hint?: string }
+  | {
+      ok: true;
+      value: string;
+      hint?: string;
+      /** The same result in other spellings or notations, each shown with its own copy button. */
+      variants?: { label: string; value: string }[];
+    }
   | { ok: false; fieldErrors: Record<string, string> };
 
 export type FormatId = string;
