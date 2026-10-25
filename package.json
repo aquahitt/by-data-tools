@@ -1,25 +1,59 @@
 {
   "name": "by-data-tools",
   "version": "0.1.0",
+  "description": "Проверка, разбор и генерация тестовых данных Республики Беларусь: идентификационный номер, паспорт, УНП, IBAN, телефон и ещё 19 разделов",
+  "keywords": [
+    "belarus",
+    "test-data",
+    "test-data-generator",
+    "validator",
+    "iban",
+    "unp",
+    "fake-data",
+    "qa"
+  ],
+  "homepage": "https://aquahitt.github.io/by-data-tools/",
+  "bugs": {
+    "url": "https://github.com/aquahitt/by-data-tools/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aquahitt/by-data-tools.git"
+  },
   "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/types/lib.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/lib.d.ts",
+      "import": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "test": "vitest run",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc"
-  },
-  "private": true,
-  "type": "module",
-  "engines": {
-    "node": ">=20.19"
-  },
-  "dependencies": {
-    "@fontsource/roboto": "^5.3.0",
-    "@material/web": "^2.5.0"
+    "typecheck": "tsc",
+    "media": "npm run build && node scripts/media/capture.mjs",
+    "build:lib": "vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/fix-dts.mjs lib/types",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build:lib"
   },
   "devDependencies": {
+    "@fontsource/roboto": "^5.3.0",
+    "@material/web": "^2.5.0",
     "@types/node": "^20.19.43",
+    "gifenc": "^1.0.3",
+    "playwright-core": "^1.56.1",
+    "pngjs": "^7.0.0",
     "typescript": "~5.9.3",
     "vite": "^8.3.1",
     "vitest": "^4.1.11"

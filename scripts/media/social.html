@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<!-- Social preview, 1280×640: rendered by capture.mjs into docs/media/social-preview.png. -->
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1280px; height: 640px; overflow: hidden; font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', Roboto, sans-serif;
+    background: #f4fbf8; color: #161d1c; display: flex; }
+  .left { flex: 0 0 560px; padding: 72px 0 0 72px; display: flex; flex-direction: column; }
+  .mark { width: 64px; height: 64px; border-radius: 16px; background: #006a60; color: #fff; margin-bottom: 32px;
+    display: grid; place-items: center; font-size: 28px; font-weight: 700; letter-spacing: 0.5px; }
+  h1 { font-size: 64px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
+  p { margin-top: 24px; font-size: 32px; line-height: 1.25; color: #3f4947; text-wrap: balance; }
+  .chips { margin-top: auto; margin-bottom: 72px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .chips span { font-size: 20px; padding: 8px 16px; border-radius: 999px; background: #cce8e2; color: #00201c; font-weight: 500; }
+  .right { flex: 1; position: relative; }
+  .right img { position: absolute; left: 24px; top: 64px; width: 680px; border-radius: 20px;
+    box-shadow: 0 24px 64px rgba(0, 60, 54, 0.22), 0 2px 6px rgba(0, 0, 0, 0.08); }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="mark">BY</div>
+    <h1>by-data-tools</h1>
+    <p>Проверка и генерация тестовых данных Беларуси</p>
+    <div class="chips">
+      <span>Идентификационный номер</span><span>УНП</span><span>IBAN</span><span>Паспорт</span><span>Телефон</span><span>и ещё 19 разделов</span>
+    </div>
+  </div>
+  <div class="right"><img src="../../docs/media/iban-light.png" alt=""></div>
+</body>
+</html>
